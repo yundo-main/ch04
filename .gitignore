@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# macOS
+.DS_Store
+
+# 모델 가중치 (직접 다운로드, 버전관리 대상 아님 — guide.md 0단계 참고)
+models/
+*.gguf
