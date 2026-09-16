@@ -10,7 +10,7 @@ API 키 없이 재현 가능한 프롬프트 인젝션(Prompt Injection) 실습 
 | `ch04/shared/mock_llm.py` | **(공유)** 가중치 기반 규칙 mock 엔진. ch04/d01~d08 이 공유하며, 이 폴더에는 로컬 복사본이 없다 — `sys.path`로 찾아 import 한다 |
 | `ch04/shared/local_llm.py` | **(공유)** 실제 로컬 소형 LLM(Ollama, HTTP API) 클라이언트. 마찬가지로 d01~d08 이 공유 |
 | `real_llm.py` | `shared/local_llm.py` 위에 d01 전용 시나리오(직접/간접 인젝션 프롬프트 구성)만 얹은 얇은 wrapper. `--real` 플래그로 실행 |
-| `prompts.py` | 시스템 지시문·공격 문구·보안 응답 등 프롬프트 텍스트를 로직 코드에서 분리해 모아둔 곳. `d01`(local_llm.py 버전)과 별도 관리 — 이 파일의 `ATTACKER_INPUT` 은 mock_llm.py 의 카탈로그(`INJECTION_PATTERNS`)가 실제로 잡을 수 있는 override 형 문구를 유지한다(자세한 이유는 파일 내 주석 참고) |
+| `ch04/shared/prompts.py` | **(공유)** 시스템 지시문·공격 문구·보안 응답 등 모든 프롬프트 텍스트. d01은 이 중 `DIRECT_*`/`INDIRECT_*` 상수를 쓴다 — 이 폴더에는 로컬 `prompts.py`가 없다. `ATTACKER_INPUT`은 mock_llm.py 의 카탈로그(`INJECTION_PATTERNS`)가 실제로 잡을 수 있는 override 형 문구를 유지한다(자세한 이유는 그 상수 옆 주석 참고) |
 | `direct_injection.py` | 예제 1: 사용자 입력을 통한 직접 인젝션 |
 | `indirect_injection.py` | 예제 2: 검색 문서(RAG)를 통한 간접 인젝션 |
 | `documents.json` | 예제 2용 문서 3건(정상 2 + 오염 1). `d01` 과 동일한 최신본으로 동기화됨 |
@@ -43,27 +43,28 @@ API 키 없이 재현 가능한 프롬프트 인젝션(Prompt Injection) 실습 
   인젝션 시나리오)만 이 파일에 남아 있고, 실제 HTTP 호출은 `chat_messages()`에 위임한다.
   `--real` 플래그가 있을 때만 `run_real()`에서 쓰인다. 기본 실행(mock)에는 영향 없음.
 
-**`prompts.py`**
-- 이 폴더 전용 프롬프트 텍스트 저장소. **`mock_llm.py`의 정규식 패턴과 호환되는 문구만** 담는다는 제약이 있다(아래 "프롬프트가 미치는 영향" 참고).
+**`ch04/shared/prompts.py`** (공유)
+- ch04 전체 프롬프트 텍스트 저장소(중복 여부와 무관하게 모든 챕터의 프롬프트를 여기 모은다).
+  d01의 `DIRECT_*`/`INDIRECT_*` 상수는 **`mock_llm.py`의 정규식 패턴과 호환되는 문구만** 담는다는 제약이 있다(아래 "프롬프트가 미치는 영향" 참고).
 
 **`direct_injection.py`** / **`indirect_injection.py`**
-- 로직만 담당: `prompts.py`에서 텍스트를 가져와 `mock_llm.py`(기본) / `real_llm.py`(`--real`)에 넘기고, 결과를 출력·검증(`assert`)한다.
+- 로직만 담당: `shared/prompts.py`에서 텍스트를 가져와 `mock_llm.py`(기본) / `real_llm.py`(`--real`)에 넘기고, 결과를 출력·검증(`assert`)한다.
 - `indirect_injection.py`는 추가로 `Document`/`load_documents()`/`keyword_search()`(글자 집합 교집합 기반 검색)와, `mock_llm._find_injection_matches()`를 재사용하는 `_looks_poisoned()`(콘텐츠 보안 스캔)를 갖고 있다.
 
 **`documents.json`**
 - 문서 3건: `weather_note`(무관), `refund_policy`(정상 정책), `refund_policy_v2_poisoned`(오염). `keyword_search()`가 질문과 겹치는 글자 수로 상위 문서를 고르므로, "환불" 관련 질문에는 오염 문서가 실제로 검색되도록 문구가 설계돼 있다.
 
 **`Dockerfile`**
-- `ch04/shared/mock_llm.py`, `ch04/shared/local_llm.py`(공유) + `real_llm.py`, `prompts.py`,
-  `direct_injection.py`, `indirect_injection.py`, `documents.json`(d01 전용)을 전부
-  이미지에 복사해야 한다. 하나라도 빠지면 스크립트 최상단 import 에서 바로
+- `ch04/shared/mock_llm.py`, `ch04/shared/local_llm.py`, `ch04/shared/prompts.py`(공유) +
+  `real_llm.py`, `direct_injection.py`, `indirect_injection.py`, `documents.json`(d01 전용)을
+  전부 이미지에 복사해야 한다. 하나라도 빠지면 스크립트 최상단 import 에서 바로
   `ModuleNotFoundError`로 실패한다. `shared/` 가 다른 폴더이므로 빌드 컨텍스트를
   `ch04/` 루트로 지정해야 COPY가 그 경로에 닿는다(아래 "실행 방법 > Docker" 참고).
 
 ## 프롬프트가 미치는 영향
 
 `mock_llm.py`는 의미를 이해하는 게 아니라 **정규식 매칭 여부로만** 동작을 결정한다. 그래서
-`prompts.py`나 `documents.json`의 문구를 바꾸면 결과가 "그럴듯하게" 바뀌는 게 아니라,
+`shared/prompts.py`나 `documents.json`의 문구를 바꾸면 결과가 "그럴듯하게" 바뀌는 게 아니라,
 패턴에 걸리느냐 안 걸리느냐에 따라 **동작 자체가 켜지거나 완전히 꺼진다.**
 
 - **`SYSTEM_INSTRUCTION`**: 내용 자체는 로직에 영향을 주지 않는다. `naive_generate()`가
@@ -124,8 +125,9 @@ Ollama가 실행 중이 아니면 안내 메시지를 출력하고 mock 결과�
 
 ### Docker
 
-**빌드 컨텍스트 주의**: `mock_llm.py`/`local_llm.py`가 `ch04/shared/`로
-이동해 d01~d08 이 공유한다. `Dockerfile`이 `COPY shared/...`를 쓰기 때문에
+**빌드 컨텍스트 주의**: `mock_llm.py`/`local_llm.py`/`prompts.py`가
+`ch04/shared/`로 이동해 d01~d08 이 공유한다. `Dockerfile`이 `COPY
+shared/...`를 쓰기 때문에
 빌드 컨텍스트가 `d01/`이 아니라 **`ch04/` 루트**여야 한다 — `cd ch04` 후
 `-f d01/Dockerfile`로 빌드한다(이 폴더 안에서 `docker build .`로 빌드하던
 기존 방식은 더 이상 동작하지 않는다).

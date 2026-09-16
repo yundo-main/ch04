@@ -32,7 +32,7 @@ import sys
 
 from jailbreak_mock import Verdict
 from real_llm import DEFAULT_MODEL, escalation_jailbreak_real, is_ollama_available  # noqa: E402 (shared/ 를 sys.path 에 추가함)
-from local_prompts import (  # noqa: E402
+from prompts import (  # noqa: E402
     ESCALATION_CONVERSATION as CONVERSATION,
     ESCALATION_SIMULATED_UNSAFE_CONTENT as _SIMULATED_UNSAFE_CONTENT,
     ESCALATION_SYSTEM_INSTRUCTION as SYSTEM_INSTRUCTION,

@@ -35,7 +35,7 @@ from typing import List
 
 from leakage_mock import Verdict
 from real_llm import DEFAULT_MODEL, ask_real, is_ollama_available  # noqa: E402 (shared/ 를 sys.path 에 추가함)
-from local_prompts import MULTITENANT_QUERY, RAG_ANSWER_SYSTEM_INSTRUCTION  # noqa: E402
+from prompts import MULTITENANT_QUERY, RAG_ANSWER_SYSTEM_INSTRUCTION  # noqa: E402
 
 
 @dataclass

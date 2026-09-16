@@ -10,7 +10,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY shared/local_llm.py shared/prompts.py ./
-COPY d03/leakage_mock.py d03/real_llm.py d03/local_prompts.py d03/credential_pii_leak.py d03/multitenant_rag_leak.py d03/memory_poisoning_leak.py ./
+COPY d03/leakage_mock.py d03/real_llm.py d03/credential_pii_leak.py d03/multitenant_rag_leak.py d03/memory_poisoning_leak.py ./
 
 # 기본 실행: 세 예제를 순서대로 실행.
 # 하나만 실행하려면: docker run <image> python credential_pii_leak.py

@@ -37,17 +37,18 @@
 | --- | --- |
 | `mock_llm.py` | 규칙 기반 mock LLM 엔진. **로컬/Docker 어디서든 기본 실행 경로** — API 키나 외부 서비스 없이 항상 동일하게 재현되는 결정론적 판정을 담당한다. |
 | `local_llm.py` | 실제 로컬 Ollama 모델을 호출하는 클라이언트. `--real` 플래그로만 켜지는 선택 경로 — **로컬(venv)에서 가장 간편**하고(호스트에서 바로 `localhost:11434` 접근), Docker에서는 `OLLAMA_HOST` 환경변수 재정의가 필요하다(컨테이너 안의 `localhost`는 컨테이너 자신이라서). |
-| `prompts.py` | 공통 프롬프트 조각. `RAG_ANSWER_SYSTEM_INSTRUCTION`(d03/d06/d07/d08 이 실제 모델 `--real` 테스트에서 공통으로 씀), `SAFETY_POLICY_PREFIX`(d02의 세 mock 탈옥 예제가 시스템 지시문 첫 문장으로 공통으로 씀). 문구가 의도적으로 다른 부분(예: d02의 위험 카테고리 나열)은 억지로 합치지 않고 각 디렉터리 자체 파일에 남긴다. |
+| `prompts.py` | **ch04 전체의 모든 프롬프트 텍스트.** 중복 여부와 무관하게 d01~d08의 프롬프트를 전부 여기 모은다("ch04를 하나의 lab으로" 원칙) — d01~d03 어디에도 로컬 prompts 파일이 없다. |
 | `documents.json` | classification/owner/allowed_roles/canary_token 이 태깅된 공용 샘플 문서 세트(d05~d08 사용). |
 | `guide.md` | 위 공유 구조와 sys.path/Docker 평탄화 메커니즘에 대한 상세 설명. |
 
-**주의**: 자기 프롬프트도 있고 그중 일부는 `shared/prompts.py`의 상수를
-가져와 조합해야 하는 폴더(d02, d03)는, 로컬 파일 이름을 `prompts.py`로
-두면 안 된다 — Python 순환 참조(자기 자신을 다시 import)와 Docker `COPY`
-경로 충돌(`shared/prompts.py`와 같은 `/app/prompts.py`로 COPY되어 서로
-덮어씀)이 동시에 난다. 그래서 이런 폴더는 로컬 파일을 `local_prompts.py`로
-따로 이름 짓고, 그 안에서 `shared/prompts.py`의 상수를 가져와 재노출한다.
-자세한 내용은 `shared/guide.md` 참고.
+**주의**: 만약 어떤 폴더가 나중에 shared에 없는 자기만의 프롬프트를 다시
+로컬에 두면서, 동시에 `shared/prompts.py`의 상수도 가져와 조합해야 하는
+상황이 생기면, 로컬 파일 이름을 `prompts.py`로 두면 안 된다 — Python
+순환 참조(자기 자신을 다시 import)와 Docker `COPY` 경로 충돌
+(`shared/prompts.py`와 같은 `/app/prompts.py`로 COPY되어 서로 덮어씀)이
+동시에 난다(d02/d03이 한때 이 문제를 `local_prompts.py`라는 이름으로
+우회했었다 — 지금은 전부 shared로 옮겨서 해당 없음). 자세한 내용은
+`shared/guide.md`의 "(지나간 이력)" 절 참고.
 
 ## Docker 관련
 

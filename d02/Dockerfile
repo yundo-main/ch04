@@ -10,7 +10,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY shared/local_llm.py shared/prompts.py ./
-COPY d02/jailbreak_mock.py d02/real_llm.py d02/local_prompts.py d02/persona_jailbreak.py d02/escalation_jailbreak.py d02/encoding_jailbreak.py ./
+COPY d02/jailbreak_mock.py d02/real_llm.py d02/persona_jailbreak.py d02/escalation_jailbreak.py d02/encoding_jailbreak.py ./
 
 # 기본 실행: 세 예제를 순서대로 실행.
 # 하나만 실행하려면: docker run <image> python persona_jailbreak.py

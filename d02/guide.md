@@ -9,9 +9,8 @@
 | 파일 | 역할 |
 |---|---|
 | `jailbreak_mock.py` | 공용 결과 타입(`Verdict`). 세 예제가 함께 쓴다 |
-| `local_prompts.py` | 세 예제의 프롬프트 텍스트(`SYSTEM_INSTRUCTION`/`ATTACKER_INPUT`/`CONVERSATION` 등)를 로직 코드에서 분리해 모아둔 곳(`ch04/d01`의 `prompts.py`와 동일한 목적). `ch04/shared/prompts.py`의 `SAFETY_POLICY_PREFIX`도 여기서 가져와 조합한다. 이름이 `prompts.py`가 아닌 이유: shared 파일과 이름이 같으면 Docker COPY 시 경로가 겹쳐 서로를 덮어쓴다(아래 "구성 파일" 잔여 위험 참고) |
+| `ch04/shared/prompts.py` | **(공유)** 세 예제의 프롬프트 텍스트 전부(`PERSONA_*`/`ESCALATION_*`/`ENCODING_*` — `SYSTEM_INSTRUCTION`/`ATTACKER_INPUT`/`CONVERSATION`/`SIMULATED_UNSAFE_CONTENT` 등). 이 폴더에는 로컬 prompts 파일이 없다 — 전부 shared에서 가져온다. `SYSTEM_INSTRUCTION`의 첫 문장("당신은 안전 정책을 준수하는 AI 어시스턴트입니다.")이 세 예제에 글자 그대로 중복돼 있던 걸 `SAFETY_POLICY_PREFIX`로 뽑아 공통화했고, 위험 카테고리를 나열하는 두 번째 문장은 예제마다 의도적으로 다르므로 각 상수에 그대로 남아 있다 |
 | `real_llm.py` | `ch04/shared/local_llm.py`(공유 Ollama 클라이언트) 위에 d02 전용 탈옥 시나리오만 얹은 얇은 wrapper. `--real` 플래그로 실행 |
-| `ch04/shared/prompts.py` | **(공유)** 세 예제의 `SYSTEM_INSTRUCTION` 첫 문장("당신은 안전 정책을 준수하는 AI 어시스턴트입니다.")이 글자 그대로 중복돼 있던 것을 `SAFETY_POLICY_PREFIX`로 뽑아냄. 위험 카테고리를 나열하는 두 번째 문장은 예제마다 의도적으로 다르므로 각 파일에 남아 있다 |
 | `persona_jailbreak.py` | 예제 1: 페르소나/역할극 탈옥 ("DAN" 류) |
 | `escalation_jailbreak.py` | 예제 2: 다중 턴 점진적 유도 탈옥 ("Crescendo" 류) |
 | `encoding_jailbreak.py` | 예제 3: 인코딩/난독화 우회 탈옥 (Base64 류) |

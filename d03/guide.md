@@ -13,9 +13,8 @@ Leakage, Memory Poisoning)를 코드로 재현한다.
 | 파일 | 역할 | 강의안 매핑 |
 |---|---|---|
 | `leakage_mock.py` | 공용 결과 타입(`Verdict`). 세 예제가 함께 쓴다 | — |
-| `local_prompts.py` | 세 예제의 프롬프트 텍스트(`USER_PASTE`/`MULTITENANT_QUERY`/`MEMORY_RECALL_*` 등)를 로직 코드에서 분리해 모아둔 곳(`ch04/d01`의 `prompts.py`와 동일한 목적). `ch04/shared/prompts.py`의 `RAG_ANSWER_SYSTEM_INSTRUCTION`도 여기서 재노출한다. 이름이 `prompts.py`가 아닌 이유: shared 파일과 이름이 같으면 Docker COPY 시 경로가 겹쳐 서로를 덮어쓴다 | — |
+| `ch04/shared/prompts.py` | **(공유)** 세 예제의 프롬프트 텍스트 전부(`CODE_REVIEW_SYSTEM_INSTRUCTION`/`USER_PASTE`/`MULTITENANT_QUERY`/`MEMORY_RECALL_*`/`RAG_ANSWER_SYSTEM_INSTRUCTION`). 이 폴더에는 로컬 prompts 파일이 없다 — 전부 shared에서 가져온다 | 예제 2(`--real`)는 `RAG_ANSWER_SYSTEM_INSTRUCTION` 사용 |
 | `real_llm.py` | `ch04/shared/local_llm.py`(공유 Ollama 클라이언트)를 그대로 재노출하는 얇은 wrapper. `--real` 플래그로 실행 | — |
-| `ch04/shared/prompts.py` | **(공유)** `multitenant_rag_leak.py --real`이 쓰는 공통 시스템 지시문(`RAG_ANSWER_SYSTEM_INSTRUCTION`) | 예제 2(`--real`) |
 | `credential_pii_leak.py` | 예제 1: 자격증명/PII 유출 (Context Redaction 미적용) | 시나리오 A, 경로 P1·P5 |
 | `multitenant_rag_leak.py` | 예제 2: RAG 교차 테넌트 데이터 유출 (ACL 누락) | 시나리오 B, 경로 P3 |
 | `memory_poisoning_leak.py` | 예제 3: 메모리 포이즈닝을 통한 세션 간 지속 유출 | 용어 "Memory Poisoning", 경로 P6 |
@@ -38,9 +37,9 @@ python memory_poisoning_leak.py
 
 ### Docker
 
-**빌드 컨텍스트 주의**: `local_llm.py`가 `ch04/shared/`로 이동해 d01~d08 이
-공유한다. 빌드 컨텍스트가 `d03/`가 아니라 **`ch04/` 루트**여야 한다 —
-`cd ch04` 후 `-f d03/Dockerfile`로 빌드한다.
+**빌드 컨텍스트 주의**: `local_llm.py`/`prompts.py`가 `ch04/shared/`로
+이동해 d01~d08 이 공유한다. 빌드 컨텍스트가 `d03/`가 아니라 **`ch04/`
+루트**여야 한다 — `cd ch04` 후 `-f d03/Dockerfile`로 빌드한다.
 
 ```
 cd ch04

@@ -11,12 +11,8 @@ mock 엔진/Ollama 클라이언트/샘플 문서를 각자 복사해 갖고 있�
 | --- | --- | --- |
 | `mock_llm.py` | 가중치 기반 규칙 mock LLM 엔진(`PatternRule`/`score_text`/`naive_generate`/`guarded_generate`) | d01 |
 | `local_llm.py` | 로컬 Ollama HTTP 클라이언트(`chat_messages`/`ask_real`/`is_ollama_available`) | d01~d08 (`real_llm.py` 경유) |
-| `prompts.py` | 공통 프롬프트 조각 — `RAG_ANSWER_SYSTEM_INSTRUCTION`(실제 모델 `--real` 테스트용), `SAFETY_POLICY_PREFIX`(mock 탈옥 예제 시스템 지시문 첫 문장) | `RAG_ANSWER_SYSTEM_INSTRUCTION`: d03(예제 2), d06, d07, d08 / `SAFETY_POLICY_PREFIX`: d02 |
+| `prompts.py` | **ch04 전체의 모든 프롬프트 텍스트.** 다른 파일과 중복되는지 여부와 무관하게 전부 여기 모은다("ch04를 하나의 lab으로" 원칙) — d01~d03 어디에도 로컬 prompts 파일이 없다 | d01(`DIRECT_*`/`INDIRECT_*`), d02(`PERSONA_*`/`ESCALATION_*`/`ENCODING_*`/`SAFETY_POLICY_PREFIX`), d03(`CODE_REVIEW_*`/`USER_PASTE`/`MULTITENANT_QUERY`/`MEMORY_RECALL_*`), d03(예제2)·d06·d07·d08(`RAG_ANSWER_SYSTEM_INSTRUCTION`) |
 | `documents.json` | classification/owner/allowed_roles/canary_token 태깅된 공용 샘플 문서 8건 | d05, d06, d07, d08 |
-
-(참고: `local_prompts.py`는 `shared/`가 아니라 `d02/`, `d03/` 안에 있다 — 각
-폴더 자체 프롬프트 + shared 상수를 함께 재노출하는 파일이다. 아래
-"폴더가 자기 프롬프트 + shared 프롬프트를 둘 다 필요로 할 때" 참고.)
 
 `mock_llm.py`는 현재 d01의 카탈로그(`INJECTION_PATTERNS`)만 내장하고 있다 —
 `PatternRule`/`score_text`/`naive_generate`/`guarded_generate`는 카탈로그를
@@ -34,32 +30,32 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "shared"))
 ```
 
 `insert(0, ...)`가 아니라 **`append()`**를 쓰는 이유: 로컬 디렉터리에 동명
-파일이 있으면(예: d01은 자체 `prompts.py`를 갖고 있다) 그게 항상 우선해야
-한다. `append()`는 이미 자동으로 잡혀 있는 스크립트 자신의 디렉터리보다
-`shared/`를 뒤에 두므로, 이름이 겹쳐도 로컬 파일이 이긴다.
+파일이 있으면 그게 항상 우선해야 한다. `append()`는 이미 자동으로 잡혀
+있는 스크립트 자신의 디렉터리보다 `shared/`를 뒤에 두므로, 이름이 겹쳐도
+로컬 파일이 이긴다. 지금은 d01~d03 어디에도 로컬 `prompts.py`가 없어서
+이 규칙이 실제로 시험대에 오르는 경우는 없지만, 나중에 어떤 폴더가 다시
+로컬 prompts 파일을 만들면 이 규칙 덕분에 그 로컬 파일이 shared 보다
+우선하게 된다.
 
-### 폴더가 자기 프롬프트 + shared 프롬프트를 **둘 다** 필요로 할 때
+### (지나간 이력) local_prompts.py 를 썼던 이유와 왜 그만뒀는지
 
-d01처럼 로컬 `prompts.py`가 shared 와 아예 무관하면 위 `append()` 규칙만으로
-충분하다. 하지만 d02/d03 처럼 **로컬 프롬프트도 있고 그중 일부는 shared의
-상수(`SAFETY_POLICY_PREFIX`, `RAG_ANSWER_SYSTEM_INSTRUCTION`)를 가져와
-조합**해야 하는 경우, 로컬 파일 이름을 `prompts.py`로 두면 안 된다 — 두
-가지 문제가 동시에 난다.
+한때 d02/d03은 "로컬 전용 프롬프트도 있고, 그중 일부는 shared 상수
+(`SAFETY_POLICY_PREFIX`, `RAG_ANSWER_SYSTEM_INSTRUCTION`)를 가져와
+조합도 해야 하는" 상태였다. 그때는 로컬 파일 이름을 `prompts.py`로 두면
+안 됐다 — 두 가지 문제가 동시에 났다: (1) 로컬 `prompts.py` 안에서
+`from prompts import ...`를 쓰면 자기 자신을 다시 가져오는 Python 순환
+참조가 나고, (2) Docker 빌드 시 `COPY shared/prompts.py ./`와
+`COPY d02/prompts.py ./`가 이미지 안의 같은 경로(`/app/prompts.py`)를
+가리켜서 나중 COPY가 앞선 걸 덮어써버렸다. 그래서 로컬 파일을
+`local_prompts.py`로 이름 지어 우회했다.
 
-1. **Python 순환 참조**: 로컬 `prompts.py` 안에서 `from prompts import
-   SAFETY_POLICY_PREFIX`를 쓰면, `import prompts`가 지금 로딩 중인 자기
-   자신을 다시 가져오려는 순환 참조가 된다(로컬 디렉터리가 항상 먼저
-   검색되므로).
-2. **Docker COPY 경로 충돌**: 빌드 시 `COPY shared/prompts.py ./`와
-   `COPY d02/prompts.py ./`가 이미지 안의 **같은 경로**(`/app/prompts.py`)를
-   가리킨다 — 나중 COPY가 앞선 걸 덮어써서, 컨테이너 안에는 둘 중 하나만
-   남는다.
-
-그래서 d02/d03은 로컬 파일을 `local_prompts.py`로 이름 짓고, 그 안에서
-`from prompts import ...`로 shared 상수를 가져와 자기 것과 조합해 재노출한다
-(`sys.path` 검색에서 "prompts"라는 이름이 이제 shared 파일만 가리키므로
-충돌이 없다). 각 예제 스크립트는 `from local_prompts import ...`로 최종
-조합된 상수만 가져온다.
+지금은 "중복 여부와 무관하게 모든 프롬프트를 shared로 모은다"는 원칙으로
+바뀌면서 d01~d03 어디에도 로컬 prompts 파일이 남아 있지 않다 — 그래서 이
+문제 자체가 사라졌다. 다만 **앞으로 어떤 폴더가 shared에 없는 자기만의
+프롬프트를 다시 로컬에 두면서, 동시에 shared 상수도 가져와 조합해야
+하는 상황이 생기면 위 두 문제가 다시 재현된다** — 그때는 로컬 파일
+이름을 `prompts.py`가 아닌 다른 이름(`local_prompts.py` 등)으로 지어야
+한다는 걸 기억해둘 것.
 
 `documents.json`은 **Python 모듈이 아니라 파일 경로로 직접 여는 데이터
 파일**이라 `sys.path`의 영향을 받지 않는다. 대신 각 로더 함수가 두 경로를

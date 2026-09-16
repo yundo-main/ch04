@@ -32,7 +32,7 @@ import sys
 
 from jailbreak_mock import Verdict
 from real_llm import DEFAULT_MODEL, is_ollama_available, persona_jailbreak_real  # noqa: E402 (shared/ 를 sys.path 에 추가함)
-from local_prompts import (  # noqa: E402
+from prompts import (  # noqa: E402
     PERSONA_ATTACKER_INPUT as ATTACKER_INPUT,
     PERSONA_SIMULATED_UNSAFE_CONTENT as _SIMULATED_UNSAFE_CONTENT,
     PERSONA_SYSTEM_INSTRUCTION as SYSTEM_INSTRUCTION,
