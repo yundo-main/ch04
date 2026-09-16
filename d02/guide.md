@@ -9,8 +9,8 @@
 | 파일 | 역할 |
 |---|---|
 | `jailbreak_mock.py` | 공용 결과 타입(`Verdict`). 세 예제가 함께 쓴다 |
-| `ch04/shared/prompts.py` | **(공유)** 세 예제의 프롬프트 텍스트 전부(`PERSONA_*`/`ESCALATION_*`/`ENCODING_*` — `SYSTEM_INSTRUCTION`/`ATTACKER_INPUT`/`CONVERSATION`/`SIMULATED_UNSAFE_CONTENT` 등). 이 폴더에는 로컬 prompts 파일이 없다 — 전부 shared에서 가져온다. `SYSTEM_INSTRUCTION`의 첫 문장("당신은 안전 정책을 준수하는 AI 어시스턴트입니다.")이 세 예제에 글자 그대로 중복돼 있던 걸 `SAFETY_POLICY_PREFIX`로 뽑아 공통화했고, 위험 카테고리를 나열하는 두 번째 문장은 예제마다 의도적으로 다르므로 각 상수에 그대로 남아 있다 |
-| `real_llm.py` | `ch04/shared/local_llm.py`(공유 Ollama 클라이언트) 위에 d02 전용 탈옥 시나리오만 얹은 얇은 wrapper. `--real` 플래그로 실행 |
+| `ch04/shared/prompts.py` | **(공유, mock 전용)** 세 예제의 mock 프롬프트 텍스트 전부(`PERSONA_*`/`ESCALATION_*`/`ENCODING_*` — `SYSTEM_INSTRUCTION`/`ATTACKER_INPUT`/`CONVERSATION`/`SIMULATED_UNSAFE_CONTENT` 등). 이 폴더에는 로컬 prompts 파일이 없다 — 전부 shared에서 가져온다. `SYSTEM_INSTRUCTION`의 첫 문장("당신은 안전 정책을 준수하는 AI 어시스턴트입니다.")이 세 예제에 글자 그대로 중복돼 있던 걸 `SAFETY_POLICY_PREFIX`로 뽑아 공통화했고, 위험 카테고리를 나열하는 두 번째 문장은 예제마다 의도적으로 다르므로 각 상수에 그대로 남아 있다. **주의**: 이 상수들은 `--real` 경로에서 안 쓰인다 — 아래 `real_llm.py` 설명 참고 |
+| `real_llm.py` | `ch04/shared/local_llm.py`(공유 Ollama 클라이언트) 위에 d02 전용 탈옥 시나리오만 얹은 얇은 wrapper. `--real` 플래그로 실행. **`shared/prompts.py`의 mock 상수를 쓰지 않고, 완전히 다른 안전한 대리 문구(`SECRET_CODENAME`)를 이 파일 안에 직접 정의한다** — 위험하게 들리는 mock 문구를 실제 모델에 그대로 보내지 않기 위한 의도적 설계 |
 | `persona_jailbreak.py` | 예제 1: 페르소나/역할극 탈옥 ("DAN" 류) |
 | `escalation_jailbreak.py` | 예제 2: 다중 턴 점진적 유도 탈옥 ("Crescendo" 류) |
 | `encoding_jailbreak.py` | 예제 3: 인코딩/난독화 우회 탈옥 (Base64 류) |

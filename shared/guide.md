@@ -11,7 +11,7 @@ mock 엔진/Ollama 클라이언트/샘플 문서를 각자 복사해 갖고 있�
 | --- | --- | --- |
 | `mock_llm.py` | 가중치 기반 규칙 mock LLM 엔진(`PatternRule`/`score_text`/`naive_generate`/`guarded_generate`) | d01 |
 | `local_llm.py` | 로컬 Ollama HTTP 클라이언트(`chat_messages`/`ask_real`/`is_ollama_available`) | d01~d08 (`real_llm.py` 경유) |
-| `prompts.py` | **ch04 전체의 모든 프롬프트 텍스트.** 다른 파일과 중복되는지 여부와 무관하게 전부 여기 모은다("ch04를 하나의 lab으로" 원칙) — d01~d03 어디에도 로컬 prompts 파일이 없다 | d01(`DIRECT_*`/`INDIRECT_*`), d02(`PERSONA_*`/`ESCALATION_*`/`ENCODING_*`/`SAFETY_POLICY_PREFIX`), d03(`CODE_REVIEW_*`/`USER_PASTE`/`MULTITENANT_QUERY`/`MEMORY_RECALL_*`), d03(예제2)·d06·d07·d08(`RAG_ANSWER_SYSTEM_INSTRUCTION`) |
+| `prompts.py` | **ch04 전체의 모든 프롬프트 텍스트.** 다른 파일과 중복되는지 여부와 무관하게 전부 여기 모은다("ch04를 하나의 lab으로" 원칙) — d01~d03 어디에도 로컬 prompts 파일이 없다. **mock/`--real` 사용 여부가 섹션마다 다르다** — d01/d03은 mock과 `--real`이 상수를 그대로 같이 쓰지만, d02(`PERSONA_*`/`ESCALATION_*`/`ENCODING_*`)는 **mock 전용**이고 `d02/real_llm.py`의 `--real` 경로는 이 상수들을 안 쓰고 완전히 다른 안전한 대리 문구를 자체 정의한다(파일 내 주석 참고) | d01(`DIRECT_*`/`INDIRECT_*`, mock+real 공용), d02(`PERSONA_*`/`ESCALATION_*`/`ENCODING_*`/`SAFETY_POLICY_PREFIX`, **mock 전용**), d03(`CODE_REVIEW_*`/`USER_PASTE`/`MULTITENANT_QUERY`/`MEMORY_RECALL_*`, mock+real 공용), d03(예제2)·d06·d07·d08(`RAG_ANSWER_SYSTEM_INSTRUCTION`, mock+real 공용) |
 | `documents.json` | classification/owner/allowed_roles/canary_token 태깅된 공용 샘플 문서 8건 | d05, d06, d07, d08 |
 
 `mock_llm.py`는 현재 d01의 카탈로그(`INJECTION_PATTERNS`)만 내장하고 있다 —
