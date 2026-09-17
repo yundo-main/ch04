@@ -70,7 +70,7 @@
 
 | 파일 | 역할 | 강의안 매핑 |
 |---|---|---|
-| `ch04/shared/documents.json` | **(공유) 실습용 문서** — 위 등급 정의서에 따라 태깅된 샘플 문서 세트(Metadata Tagging 예시: classification/owner/allowed_roles/canary_token/tenant_id). d05~d08 이 공유하며 이 폴더에는 로컬 복사본이 없다 | 용어: Metadata Tagging |
+| `documents.json` | **실습용 문서** — 위 등급 정의서에 따라 태깅된 샘플 문서 세트(Metadata Tagging 예시: classification/owner/allowed_roles/canary_token/tenant_id). 이 폴더 전용 로컬 복사본(d00-shared 공유 없음) — d06~d08도 같은 내용을 각자 로컬로 갖고 있다 | 용어: Metadata Tagging |
 | `doc_classification_mock.py` | 공용 타입(`Classification`, `Clearance`, `Verdict`) + `load_sample_documents()`(정의서 대비 등급값 검증) | A.2, B.1 |
 | `default_classification_missing.py` | 예제 1: 인제스트 시 등급 미지정 — 기본값 Public 취약점 | 시나리오 A, A.3 |
 | `classification_spoofing.py` | 예제 2: 클라이언트 주장 등급 vs 서버 검증 등급 (등급 위조) | 시나리오 B, A.3 |
@@ -98,9 +98,10 @@ python downgrade_on_summarization.py
 
 ### Docker
 
-**빌드 컨텍스트 주의**: `documents.json`이 `ch04/shared/`로 이동해 d05~d08 이
-공유한다. 빌드 컨텍스트가 `d05/`가 아니라 **`ch04/` 루트**여야 한다 —
-`cd ch04` 후 `-f d05/Dockerfile`로 빌드한다.
+**빌드 컨텍스트**: `documents.json`은 이 폴더 로컬 파일이라 d05 자체는
+d00-shared에 의존하지 않지만, 다른 dNN과 동일한 빌드 명령 패턴을 유지하기
+위해 컨텍스트를 **`ch04/` 루트**로 맞췄다 — `cd ch04` 후 `-f d05/Dockerfile`로
+빌드한다.
 
 ```
 cd ch04

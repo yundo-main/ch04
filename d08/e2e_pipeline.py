@@ -30,7 +30,7 @@ from enum import IntEnum
 from pathlib import Path
 from typing import List, Optional
 
-from real_llm import DEFAULT_MODEL, ask_real  # noqa: E402 (shared/ 를 sys.path 에 추가함)
+from real_llm import DEFAULT_MODEL, ask_real  # noqa: E402
 from prompts import RAG_ANSWER_SYSTEM_INSTRUCTION  # noqa: E402
 
 
@@ -64,13 +64,9 @@ class Document:
 
 
 def load_corpus(path: str = "documents.json") -> List[Document]:
-    """ch04/shared/documents.json 을 공유한다(d05~d08 이 같은 문서 세트를 쓴다) —
-    이 폴더에는 로컬 복사본이 없다. 로컬(venv) 실행 시에는 ch04/shared/ 형제
-    디렉터리에서 찾고, Docker 이미지 안(빌드 시 shared/ 를 같은 디렉터리로
-    평탄화해서 COPY 함)에서는 이 파일과 같은 디렉터리에서 찾는다."""
-    here = Path(__file__).resolve().parent
-    shared_candidate = here.parent / "shared" / path
-    doc_path = shared_candidate if shared_candidate.exists() else here / path
+    """이 폴더 전용 로컬 복사본을 쓴다(d00-shared 공유 없음) — 로컬(venv)/Docker
+    어디서든 이 파일과 같은 디렉터리에서 찾는다."""
+    doc_path = Path(__file__).resolve().parent / path
     with open(doc_path, encoding="utf-8") as f:
         raw = json.load(f)
     return [

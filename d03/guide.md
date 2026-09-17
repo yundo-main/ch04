@@ -13,11 +13,11 @@ Leakage, Memory Poisoning)를 코드로 재현한다.
 | 파일 | 역할 | 강의안 매핑 |
 |---|---|---|
 | `leakage_mock.py` | 공용 결과 타입(`Verdict`). 세 예제가 함께 쓴다 | — |
-| `ch04/shared/prompts.py` | **(공유)** 세 예제의 프롬프트 텍스트 전부(`CODE_REVIEW_SYSTEM_INSTRUCTION`/`USER_PASTE`/`MULTITENANT_QUERY`/`MEMORY_RECALL_*`/`RAG_ANSWER_SYSTEM_INSTRUCTION`). 이 폴더에는 로컬 prompts 파일이 없다 — 전부 shared에서 가져온다 | 예제 2(`--real`)는 `RAG_ANSWER_SYSTEM_INSTRUCTION` 사용 |
-| `real_llm.py` | `ch04/shared/local_llm.py`(공유 Ollama 클라이언트)를 그대로 재노출하는 얇은 wrapper. `--real` 플래그로 실행 | — |
-| `credential_pii_leak.py` | 예제 1: 자격증명/PII 유출 (Context Redaction 미적용) | 시나리오 A, 경로 P1·P5 |
-| `multitenant_rag_leak.py` | 예제 2: RAG 교차 테넌트 데이터 유출 (ACL 누락) | 시나리오 B, 경로 P3 |
-| `memory_poisoning_leak.py` | 예제 3: 메모리 포이즈닝을 통한 세션 간 지속 유출 | 용어 "Memory Poisoning", 경로 P6 |
+| `prompts.py` | 세 예제의 프롬프트 텍스트 전부(`CODE_REVIEW_SYSTEM_INSTRUCTION`/`USER_PASTE`/`MULTITENANT_QUERY`/`MEMORY_RECALL_*`/`RAG_ANSWER_SYSTEM_INSTRUCTION`). 이 폴더 로컬 파일(d00-shared 공유 없음) — `RAG_ANSWER_SYSTEM_INSTRUCTION`은 d06/d07/d08도 각자 로컬로 동일한 값을 갖고 있다 | 예제 2(기본 실습)는 `RAG_ANSWER_SYSTEM_INSTRUCTION` 사용 |
+| `real_llm.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 시나리오 콘텐츠 없음 | — |
+| `credential_pii_leak.py` | 예제 1: 자격증명/PII 유출 (Context Redaction 미적용). `run_real()`이 `real_llm.py`(wrap)를 호출해 기본 실행 시 실제 모델까지 재현한다 | 시나리오 A, 경로 P1·P5 |
+| `multitenant_rag_leak.py` | 예제 2: RAG 교차 테넌트 데이터 유출 (ACL 누락). 마찬가지로 `run_real()` 포함 | 시나리오 B, 경로 P3 |
+| `memory_poisoning_leak.py` | 예제 3: 메모리 포이즈닝을 통한 세션 간 지속 유출. 마찬가지로 `run_real()` 포함 | 용어 "Memory Poisoning", 경로 P6 |
 | `Dockerfile` | 의존성 없이 컨테이너에서 실행하기 위한 이미지 정의 (`d01`/`d02` 패턴) |  |
 | `readme.md` | 사용자 작성 브리프 |  |
 
@@ -26,63 +26,45 @@ Leakage, Memory Poisoning)를 코드로 재현한다.
 
 ## 실행 방법
 
-### 로컬 (venv)
+### 로컬 (venv) — 기본 실습
 ```
 python credential_pii_leak.py
 python multitenant_rag_leak.py
 python memory_poisoning_leak.py
 ```
 각 스크립트 끝에 `assert` 기반 자동 검증이 포함되어 있어, 예외 없이 끝나면 예상대로
-동작한 것이다.
+동작한 것이다. **플래그 없이 실행하면 mock 비교 다음에 자동으로 실제 Ollama
+모델까지 호출한다**(0단계 설정이 끝나 있다면 별도 플래그가 필요 없다). 세 스크립트 모두 이미
+존재하는 가짜(더미) 데이터(API 키, 테넌트 A 계약 조건, user_bob 카드번호)를 그대로
+실제 모델에 넘기고, 응답 텍스트에 그 값이 그대로 나타나는지만 확인한다 — 실제 민감정보를
+다루지 않는다. **Ollama가 연결 안 되어 있으면 mock 비교조차 실행하지 않고 `LLM 연결
+안됨` 메시지만 출력한 뒤 종료한다.**
 
-### Docker
+mock 결과만이라도 보려면 `--mock`을 명시한다(Ollama 연결 여부와 무관하게
+실행됨):
+```
+python credential_pii_leak.py --mock
+python multitenant_rag_leak.py --mock
+python memory_poisoning_leak.py --mock
+```
 
-**빌드 컨텍스트 주의**: `local_llm.py`/`prompts.py`가 `ch04/shared/`로
-이동해 d01~d08 이 공유한다. 빌드 컨텍스트가 `d03/`가 아니라 **`ch04/`
-루트**여야 한다 — `cd ch04` 후 `-f d03/Dockerfile`로 빌드한다.
+### Docker — 선택 실습 (mock 전용)
+
+Docker 이미지의 기본 CMD는 항상 `--mock`을 붙여 실행한다. 실제 모델
+검증은 위 "로컬 (venv)" 절대로 진행한다.
+
+**빌드 컨텍스트 주의**: `local_llm.py`가 `ch04/d00-shared/`로 이동해
+d01~d08 이 공유한다(`prompts.py`는 이 폴더 로컬 파일). 빌드 컨텍스트가
+`d03/`가 아니라 **`ch04/` 루트**여야 한다 — `cd ch04` 후 `-f d03/Dockerfile`로
+빌드한다.
 
 ```
 cd ch04
 docker build -f d03/Dockerfile -t llm-data-leakage-demo .
 docker run --rm llm-data-leakage-demo                                  # 세 예제 순차 실행
-docker run --rm llm-data-leakage-demo python credential_pii_leak.py    # 예제 1만
-docker run --rm llm-data-leakage-demo python multitenant_rag_leak.py   # 예제 2만
-docker run --rm llm-data-leakage-demo python memory_poisoning_leak.py  # 예제 3만
-```
-
-### 실제 모델(Ollama)로 검증 — 선택 사항
-
-mock은 "민감정보가 벤더 호출/로그/컨텍스트에 도달하는가"만 결정론적으로
-본다. "실제 모델이 그 데이터를 응답에 얼마나 그대로 되풀이하는가"는 별도
-질문이며, `--real` 플래그로 로컬 Ollama 모델을 대상으로 세 시나리오를
-재현해볼 수 있다.
-
-```
-brew install ollama && ollama serve
-ollama pull llama3.2:1b
-
-python credential_pii_leak.py --real
-python multitenant_rag_leak.py --real
-python memory_poisoning_leak.py --real
-```
-
-세 스크립트 모두 이미 존재하는 가짜(더미) 데이터(API 키, 테넌트 A 계약
-조건, user_bob 카드번호)를 그대로 실제 모델에 넘기고, 응답 텍스트에 그
-값이 그대로 나타나는지만 확인한다 — 실제 민감정보를 다루지 않는다. Ollama가
-실행 중이 아니면 안내 메시지를 출력하고 mock 결과만으로 종료한다(기본
-`assert` 실행에는 영향 없음).
-
-**Docker 컨테이너에서 `--real` 실행 시**: `OLLAMA_HOST`(기본값
-`http://localhost:11434`)를 재정의해야 한다 — 컨테이너 안의 `localhost`는
-컨테이너 자신이라 호스트의 Ollama에 연결되지 않는다.
-```
-# macOS/Windows (Docker Desktop)
-docker run --rm -e OLLAMA_HOST=http://host.docker.internal:11434 \
-  llm-data-leakage-demo python credential_pii_leak.py --real
-
-# Linux
-docker run --rm --network host \
-  llm-data-leakage-demo python credential_pii_leak.py --real
+docker run --rm llm-data-leakage-demo python credential_pii_leak.py --mock    # 예제 1만
+docker run --rm llm-data-leakage-demo python multitenant_rag_leak.py --mock   # 예제 2만
+docker run --rm llm-data-leakage-demo python memory_poisoning_leak.py --mock  # 예제 3만
 ```
 
 ## 예제 1: 자격증명/PII 유출 (Context Redaction 미적용)
@@ -150,6 +132,6 @@ docker run --rm --network host \
   소유자뿐 아니라 공유 범위(개인/팀/조직)를 함께 관리하는 모델이 필요하다.
 - 세 예제 모두 mock 기반 결정론적 시뮬레이션이다. 실제 벡터 검색·실제 LLM 메모리
   요약 로직은 이보다 복잡하고, 실제 배포 전에는 대상 시스템 기준 침투 테스트/레드팀
-  테스트가 필요하다. `real_llm.py`(`--real` 플래그)로 로컬 Ollama 모델 대상 재현이
+  테스트가 필요하다. `run_real()`(로컬 실행 시 기본 실습)로 Ollama 모델 대상 재현이
   가능하지만, 이 역시 단일 모델·단일 프롬프트 결과일 뿐이다 — 모델이 마스킹된 값을
   무시하고 그럴듯한 값을 지어내는 환각까지 포함해 반복 검증이 필요하다.

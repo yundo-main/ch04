@@ -1,12 +1,10 @@
 # real_llm.py
 # =============================================================================
-# response_canary_scanning.py / exfiltration_simulation.py 는 "canary가
-# 포함된 응답을 스캔·차단하는가"를 규칙 기반으로 결정론적으로 재현할 뿐,
-# 실제 모델이 인코딩·요약·의역 요청에 어떻게 반응하는지는 보여주지 않는다.
-# 이 파일은 ch04/shared/local_llm.py 의 공용 Ollama 클라이언트를 그대로
-# 재노출한다.
+# ch04/d00-shared/local_llm.py(공용 Ollama 클라이언트)를 그대로 재노출하는
+# wrap — "어떻게 전송하는가"만 안다. d07 전용 시나리오 콘텐츠(canary 포함
+# 문서/인코딩 지시 조합 등)는 여기 없다 — 각 스크립트의 run_real() 안에 있다.
 #
-# 사전 준비 / 잔여 위험은 ch04/shared/local_llm.py 상단 주석 참고.
+# 사전 준비 / 잔여 위험은 ch04/d00-shared/local_llm.py 상단 주석 참고.
 # =============================================================================
 
 from __future__ import annotations
@@ -14,7 +12,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parent.parent / "shared"))  # 로컬 동명 파일이 있으면 그게 우선
+sys.path.append(str(Path(__file__).resolve().parent.parent / "d00-shared"))  # 로컬 동명 파일이 있으면 그게 우선
 
 from local_llm import DEFAULT_MODEL, RealGenerationResult, ask_real, is_ollama_available  # noqa: E402,F401
 

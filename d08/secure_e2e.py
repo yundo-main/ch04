@@ -31,6 +31,11 @@ ATTACK_QUERY = (
 
 
 def main() -> None:
+    if "--mock" not in sys.argv and not is_ollama_available():
+        print("LLM 연결 안됨: Ollama 서버(http://localhost:11434)에 연결할 수 없습니다.")
+        print("Ollama 설치/서버 실행 여부를 확인하거나 --mock으로 실행하세요.")
+        return
+
     config = PipelineConfig(
         block_prompt_injection=True,
         resist_persona_jailbreak=True,
@@ -66,28 +71,19 @@ def main() -> None:
     assert len(result.audit_events) > 0, "보안 경로는 감사 이벤트가 기록돼야 한다"
     print("PASS: 통제가 전부 ON인 파이프라인에서 동일 공격이 차단·필터링·탐지되고 감사 이벤트가 남음을 확인.")
 
-    if "--real" in sys.argv:
+    if "--mock" not in sys.argv:
         run_real()
 
 
 def run_real(model: str = DEFAULT_MODEL) -> None:
     """통제 전부 ON인 파이프라인의 마지막 응답 생성 단계만 실제 로컬 소형
-    LLM(Ollama)으로 교체해 vulnerable_e2e.py --real 과 동일 시나리오를
-    재현한다. 차이는 입력이 아니라 방어선이 켜져 있다는 것뿐이다.
+    LLM(Ollama)으로 교체해 vulnerable_e2e.py 와 동일 시나리오를 재현한다.
+    차이는 입력이 아니라 방어선이 켜져 있다는 것뿐이다.
     """
     print()
     print("=" * 70)
     print(f"[실제 모델] Ollama ({model}) 대상 재현 (Lab 2: 통제 전부 ON)")
     print("=" * 70)
-
-    if not is_ollama_available():
-        print(
-            "Ollama 데몬에 연결할 수 없습니다 (http://localhost:11434).\n"
-            "  brew install ollama && ollama serve\n"
-            f"  ollama pull {model}\n"
-            "실행 후 다시 시도하세요."
-        )
-        return
 
     config = PipelineConfig(
         block_prompt_injection=True,

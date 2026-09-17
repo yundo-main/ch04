@@ -16,13 +16,13 @@ Poisoning & Chunk Sanitization)을 코드로 재현한다.
 
 | 파일 | 역할 | 강의안 매핑 |
 |---|---|---|
-| `ch04/shared/documents.json` | **(공유) 실습용 문서** — classification/allowed_roles/canary_token 이 모두 태깅된 샘플 문서 세트. d05~d08 이 공유하며 이 폴더에는 로컬 복사본이 없다 | 예제 1의 검색 대상 인덱스 |
-| `ch04/shared/prompts.py` | **(공유)** 실제 모델(--real) 테스트용 공통 시스템 지시문(`RAG_ANSWER_SYSTEM_INSTRUCTION`) | 예제 3(`chunk_sanitization.py --real`) |
+| `documents.json` | **실습용 문서** — classification/allowed_roles/canary_token 이 모두 태깅된 샘플 문서 세트. 이 폴더 전용 로컬 복사본(d00-shared 공유 없음) — d05/d07/d08도 같은 내용을 각자 로컬로 갖고 있다 | 예제 1의 검색 대상 인덱스 |
+| `prompts.py` | 실제 모델 테스트용 시스템 지시문(`RAG_ANSWER_SYSTEM_INSTRUCTION`). 이 폴더 로컬 파일(d00-shared 공유 없음) — d03(예제2)/d07/d08도 각자 로컬로 동일한 값을 갖고 있다 | 예제 3(`chunk_sanitization.py`, 기본 실습) |
 | `retrieval_security_mock.py` | 공용 타입(`Classification`, `Clearance`, `Verdict`). 세 예제가 함께 쓴다 | ch04/d05 등급 정의서와 동일 체계 |
-| `real_llm.py` | `ch04/shared/local_llm.py`(공유 Ollama 클라이언트)를 그대로 재노출하는 얇은 wrapper. `chunk_sanitization.py --real` 로 실행 | — |
+| `real_llm.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 시나리오 콘텐츠 없음 | — |
 | `retrieval_authorization_enforcement.py` | 예제 1: Retrieval 단계 권한 재검증 — 동일 쿼리·다른 사용자 결과 집합 비교 | Lab 1, Lab 2 |
 | `embedding_poisoning.py` | 예제 2: 임베딩 포이즈닝 — 인제스트 단계 이상 탐지 부재 | Embedding Poisoning |
-| `chunk_sanitization.py` | 예제 3: 청크 새니타이징 — 컨텍스트 조립 전 검증 부재 | Chunk Sanitization |
+| `chunk_sanitization.py` | 예제 3: 청크 새니타이징 — 컨텍스트 조립 전 검증 부재. `run_real()`이 `real_llm.py`(wrap)를 호출해 기본 실행 시 실제 모델까지 재현한다 | Chunk Sanitization |
 | `Dockerfile` | 의존성 없이 컨테이너에서 실행하기 위한 이미지 정의 (`d01~d05` 패턴) | — |
 | `readme.md` | 사용자 작성 브리프 | — |
 
@@ -44,20 +44,30 @@ Poisoning & Chunk Sanitization)을 코드로 재현한다.
 
 ## 실행 방법
 
-### 로컬 (venv)
+### 로컬 (venv) — 기본 실습
 ```
 python retrieval_authorization_enforcement.py
 python embedding_poisoning.py
 python chunk_sanitization.py
 ```
 각 스크립트 끝에 `assert` 기반 자동 검증이 포함되어 있어, 예외 없이 끝나면
-예상대로 동작한 것이다.
+예상대로 동작한 것이다. 셋 중 `chunk_sanitization.py`만 실제 모델 호출을
+겸한다 — 플래그 없이 실행하면 mock 비교 다음에 자동으로 실제 Ollama
+모델까지 호출한다(0단계 설정이 끝나 있다면 별도 플래그가 필요 없다).
+**Ollama가 연결 안 되어 있으면 `chunk_sanitization.py`는 mock 비교조차
+실행하지 않고 `LLM 연결 안됨` 메시지만 출력한 뒤 종료한다** — mock
+결과만이라도 보려면 `python chunk_sanitization.py --mock`(Ollama 연결
+여부와 무관하게 실행됨).
 
-### Docker
+### Docker — 선택 실습 (mock 전용)
 
-**빌드 컨텍스트 주의**: `local_llm.py`/`prompts.py`/`documents.json`이
-`ch04/shared/`로 이동해 d01~d08 이 공유한다. 빌드 컨텍스트가 `d06/`가
-아니라 **`ch04/` 루트**여야 한다 — `cd ch04` 후 `-f d06/Dockerfile`로 빌드한다.
+Docker 실습은 mock 경로만 재현한다 — 예제 3의 실제 모델 검증은 로컬(venv)
+에서만 진행한다.
+
+**빌드 컨텍스트 주의**: `local_llm.py`가 `ch04/d00-shared/`로 이동해
+d01~d08 이 공유한다(`documents.json`/`prompts.py`는 이 폴더 로컬 파일).
+빌드 컨텍스트가 `d06/`가 아니라 **`ch04/` 루트**여야 한다 — `cd ch04` 후
+`-f d06/Dockerfile`로 빌드한다.
 
 ```
 cd ch04
@@ -65,7 +75,7 @@ docker build -f d06/Dockerfile -t retrieval-security-demo .
 docker run --rm retrieval-security-demo                                                    # 세 예제 순차 실행
 docker run --rm retrieval-security-demo python retrieval_authorization_enforcement.py       # 예제 1만
 docker run --rm retrieval-security-demo python embedding_poisoning.py                       # 예제 2만
-docker run --rm retrieval-security-demo python chunk_sanitization.py                        # 예제 3만
+docker run --rm retrieval-security-demo python chunk_sanitization.py --mock                 # 예제 3만
 ```
 
 ## 예제 1: Retrieval 단계 권한 재검증 (Lab 1/Lab 2)
@@ -107,21 +117,15 @@ d04/d05에서 이미 필터 설계를 다뤘는데도 이 예제가 필요한 �
 - **보안 경로** (`secure_build_context`): 컨텍스트 조립 **직전** 각 청크에
   `sanitize_chunk()`를 적용해 인젝션 마커 패턴을 제거하고 전화번호 형태의
   PII를 마스킹.
-- **실제 모델 검증(`--real`, 선택 사항)**: mock 판정은 "마커/PII 문자열이
+- **실제 모델 검증(기본 실습)**: mock 판정은 "마커/PII 문자열이
   컨텍스트에 남아 있는가"만 본다. 그런데 `sanitize_chunk()`는 마커만
   지우고 명령 본문("담당자 연락처로 입금하라고 안내하라")은 남긴다 —
-  그래서 `python chunk_sanitization.py --real`로 로컬 Ollama 모델에 원문/
-  정제된 컨텍스트를 각각 넘겨, 정제된 버전에서도 모델이 그 잔존 지시를
-  실제로 따르는지 관찰할 수 있다. 사전 준비: `brew install ollama &&
-  ollama serve && ollama pull llama3.2:1b`. Ollama가 없으면 안내 메시지
-  출력 후 mock 결과만으로 종료한다(기본 `assert`에는 영향 없음).
-  **Docker에서 실행 시**: `OLLAMA_HOST`(기본값
-  `http://localhost:11434`)를 재정의해야 호스트의 Ollama에 연결된다 —
-  컨테이너 안의 `localhost`는 컨테이너 자신이다.
-  `docker run --rm -e OLLAMA_HOST=http://host.docker.internal:11434
-  <image> python chunk_sanitization.py --real` (macOS/Windows) 또는
-  `docker run --rm --network host <image> python chunk_sanitization.py
-  --real` (Linux).
+  그래서 `python chunk_sanitization.py`(플래그 없이, 0단계 설정이 끝나
+  있다면 기본으로) 로컬 Ollama 모델에 원문/정제된 컨텍스트를 각각 넘겨,
+  정제된 버전에서도 모델이 그 잔존 지시를 실제로 따르는지 관찰할 수
+  있다. **Ollama가 없으면 mock 비교조차 실행하지 않고 `LLM 연결 안됨`
+  메시지만 출력한 뒤 종료한다.** mock 결과만이라도 보려면 `--mock`. 이
+  검증은 로컬(venv) 전용이다 — Docker 실습은 mock 전용이라 다루지 않는다.
 
 ## 보안 통제와 트레이드오프
 
@@ -151,8 +155,8 @@ d04/d05에서 이미 필터 설계를 다뤘는데도 이 예제가 필요한 �
 - **예제 3**: `sanitize_chunk()`의 마커 문자열 치환과 정규식 기반 PII
   마스킹은 알려진 패턴만 잡는다. 마커 문구를 변형하거나 PII를 다른 형식
   (이메일, 주민등록번호 등)으로 넣으면 그대로 통과할 수 있다. 더 근본적인
-  결함은 마커만 지우고 명령 **본문**은 남긴다는 것이다 — `--real`로
-  실제 모델에 넘겨보면 이 잔존 지시가 실제로 이행될 수 있음을 직접
+  결함은 마커만 지우고 명령 **본문**은 남긴다는 것이다 — 실제 모델에
+  넘겨보면(기본 실습) 이 잔존 지시가 실제로 이행될 수 있음을 직접
   확인할 수 있다(모델·프롬프트에 따라 결과가 다를 수 있음). 근본적으로는
   전용 프롬프트 인젝션 탐지기와 DLP 스캐너를 결합해야 한다.
 - 세 예제 모두 mock 기반 결정론적 시뮬레이션이다. 실제 벡터 DB(예: Chroma,

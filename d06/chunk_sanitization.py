@@ -40,7 +40,7 @@ from dataclasses import dataclass
 from typing import List
 
 from retrieval_security_mock import Verdict
-from real_llm import DEFAULT_MODEL, ask_real, is_ollama_available  # noqa: E402 (shared/ 를 sys.path 에 추가함)
+from real_llm import DEFAULT_MODEL, ask_real, is_ollama_available  # noqa: E402
 from prompts import RAG_ANSWER_SYSTEM_INSTRUCTION  # noqa: E402
 
 INJECTION_MARKERS = ["[SYSTEM]", "이전 지시를 무시", "지금부터", "시스템 명령"]
@@ -104,6 +104,11 @@ def secure_build_context(chunks: List[Chunk]) -> Verdict:
 
 
 def main() -> None:
+    if "--mock" not in sys.argv and not is_ollama_available():
+        print("LLM 연결 안됨: Ollama 서버(http://localhost:11434)에 연결할 수 없습니다.")
+        print("Ollama 설치/서버 실행 여부를 확인하거나 --mock으로 실행하세요.")
+        return
+
     print("=" * 70)
     print("예제 3: 청크 새니타이징 — 컨텍스트 조립 전 검증 부재")
     print("=" * 70)
@@ -134,7 +139,7 @@ def main() -> None:
     assert safe.leaked is False, "보안 경로는 새니타이징으로 노출이 없어야 한다"
     print("PASS: 취약 경로는 인젝션 마커와 전화번호가 컨텍스트에 그대로 남음, 보안 경로는 정제되어 제거됨을 확인.")
 
-    if "--real" in sys.argv:
+    if "--mock" not in sys.argv:
         run_real()
 
 
@@ -152,15 +157,6 @@ def run_real(model: str = DEFAULT_MODEL) -> None:
     print("=" * 70)
     print(f"[실제 모델] Ollama ({model}) 대상 재현")
     print("=" * 70)
-
-    if not is_ollama_available():
-        print(
-            "Ollama 데몬에 연결할 수 없습니다 (http://localhost:11434).\n"
-            "  brew install ollama && ollama serve\n"
-            f"  ollama pull {model}\n"
-            "실행 후 다시 시도하세요."
-        )
-        return
 
     system_instruction = RAG_ANSWER_SYSTEM_INSTRUCTION
     question = "환불 절차가 어떻게 되나요?"

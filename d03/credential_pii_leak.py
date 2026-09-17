@@ -35,7 +35,7 @@ import re
 import sys
 
 from leakage_mock import Verdict
-from real_llm import DEFAULT_MODEL, ask_real, is_ollama_available  # noqa: E402 (shared/ 를 sys.path 에 추가함)
+from real_llm import DEFAULT_MODEL, ask_real, is_ollama_available  # noqa: E402
 from prompts import CODE_REVIEW_SYSTEM_INSTRUCTION, USER_PASTE  # noqa: E402
 
 _API_KEY_PATTERN = re.compile(r"sk-[A-Za-z0-9_-]{20,}")
@@ -83,6 +83,11 @@ def secure_send_to_vendor(user_paste: str) -> Verdict:
 
 
 def main() -> None:
+    if "--mock" not in sys.argv and not is_ollama_available():
+        print("LLM 연결 안됨: Ollama 서버(http://localhost:11434)에 연결할 수 없습니다.")
+        print("Ollama 설치/서버 실행 여부를 확인하거나 --mock으로 실행하세요.")
+        return
+
     print("=" * 70)
     print("예제 1: 자격증명/PII 유출 (Context Redaction 미적용)")
     print("=" * 70)
@@ -113,7 +118,7 @@ def main() -> None:
     assert safe.leaked is False, "보안 경로는 마스킹 후 유출이 없어야 한다"
     print("PASS: 취약 경로는 원문 그대로 유출, 보안 경로는 Context Redaction으로 차단함을 확인.")
 
-    if "--real" in sys.argv:
+    if "--mock" not in sys.argv:
         run_real()
 
 
@@ -129,15 +134,6 @@ def run_real(model: str = DEFAULT_MODEL) -> None:
     print("=" * 70)
     print(f"[실제 모델] Ollama ({model}) 대상 재현")
     print("=" * 70)
-
-    if not is_ollama_available():
-        print(
-            "Ollama 데몬에 연결할 수 없습니다 (http://localhost:11434).\n"
-            "  brew install ollama && ollama serve\n"
-            f"  ollama pull {model}\n"
-            "실행 후 다시 시도하세요."
-        )
-        return
 
     system_instruction = CODE_REVIEW_SYSTEM_INSTRUCTION
 

@@ -14,10 +14,10 @@ Lab 3 갭 분석 — 체크리스트 7항 자체 채점)을 코드로 재현한�
 
 | 파일 | 역할 | 강의안 매핑 |
 |---|---|---|
-| `ch04/shared/documents.json` | **(공유) 실습용 문서** — classification(d05) + allowed_roles(d04) + canary_token(d07)을 모두 갖춘 통합 샘플 문서 세트. d05~d08 이 공유하며 이 폴더에는 로컬 복사본이 없다 | Lab 1/2의 검색 대상 인덱스 |
-| `ch04/shared/prompts.py` | **(공유)** 실제 모델(--real) 테스트용 공통 시스템 지시문(`RAG_ANSWER_SYSTEM_INSTRUCTION`) | Lab 1·2(`--real`) |
-| `e2e_pipeline.py` | 공용 파이프라인 — `PipelineConfig`의 7개 플래그가 d01~d07 통제와 1:1 대응, `handle_query()`가 질의 정제→검색→재검증→응답 조립→canary 스캔을 순서대로 실행 | d01~d07 통합 |
-| `real_llm.py` | `ch04/shared/local_llm.py`(공유 Ollama 클라이언트)를 그대로 재노출하는 얇은 wrapper. `handle_query(..., use_real_llm=True)`가 응답 조립 단계에서만 이걸로 교체해서 쓴다 | — |
+| `documents.json` | **실습용 문서** — classification(d05) + allowed_roles(d04) + canary_token(d07)을 모두 갖춘 통합 샘플 문서 세트. 이 폴더 전용 로컬 복사본(d00-shared 공유 없음) — d05/d06/d07도 같은 내용을 각자 로컬로 갖고 있다 | Lab 1/2의 검색 대상 인덱스 |
+| `prompts.py` | 실제 모델 테스트용 시스템 지시문(`RAG_ANSWER_SYSTEM_INSTRUCTION`). 이 폴더 로컬 파일(d00-shared 공유 없음) — d03(예제2)/d06/d07도 각자 로컬로 동일한 값을 갖고 있다 | Lab 1·2(기본 실습) |
+| `real_llm.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 시나리오 콘텐츠 없음 | — |
+| `e2e_pipeline.py` | 공용 파이프라인 — `PipelineConfig`의 7개 플래그가 d01~d07 통제와 1:1 대응, `handle_query()`가 질의 정제→검색→재검증→응답 조립→canary 스캔을 순서대로 실행. `handle_query(..., use_real_llm=True)`가 응답 조립 단계에서만 `real_llm.py`(wrap)로 교체해서 쓴다 | d01~d07 통합 |
 | `vulnerable_e2e.py` | Lab 1: 통제 전부 OFF — 동일 시나리오의 실패 모드 기록 | Lab 1 |
 | `secure_e2e.py` | Lab 2: 통제 전부 ON — 동일 시나리오의 차단·필터·감사 확인 | Lab 2 |
 | `gap_analysis.py` | Lab 3: 통제를 하나씩만 켜서 7항 각각을 개별 채점 | Lab 3 |
@@ -44,63 +44,51 @@ Lab 3 갭 분석 — 체크리스트 7항 자체 채점)을 코드로 재현한�
 
 ## 실행 방법
 
-### 로컬 (venv)
+### 로컬 (venv) — 기본 실습
 ```
 python vulnerable_e2e.py
 python secure_e2e.py
 python gap_analysis.py
 ```
 각 스크립트 끝에 `assert` 기반 자동 검증이 포함되어 있어, 예외 없이 끝나면
-예상대로 동작한 것이다.
+예상대로 동작한 것이다. Lab 1/2는 플래그 없이 실행하면 mock 비교 다음에
+자동으로 실제 Ollama 모델까지 호출한다(0단계 설정이 끝나 있다면 별도
+플래그가 필요 없다). Lab 1/2의 응답은 기본적으로 f-string으로 조립된
+mock이다 — 인젝션 차단/ACL/등급 필터/retrieval 재검증/canary 스캔은
+전부 실제 로직이 돌지만, "최종적으로 모델이 뭐라고 답하는가"는
+재현하지 않는다. 실제 모델 경로는 `handle_query(..., use_real_llm=True)`
+로 **응답 생성 단계만** Ollama 모델 호출로 교체한다 — 나머지 6개 통제는
+그대로다. Lab 3(`gap_analysis.py`)에는 이 경로가 없다 — 항목별 isolate
+테스트는 결정론적 단위 검증이 목적이라 mock이 더 적합하다. **Lab 1/2는
+Ollama가 연결 안 되어 있으면 mock 비교조차 실행하지 않고 `LLM 연결
+안됨` 메시지만 출력한 뒤 종료한다.** 실제 모델 경로는 비결정적이라
+`assert` 없이 결과만 출력한다.
 
-### Docker
+mock 결과만이라도 보려면 `--mock`을 명시한다(Ollama 연결 여부와 무관하게
+실행됨):
+```
+python vulnerable_e2e.py --mock   # 통제 전부 OFF + mock 응답만
+python secure_e2e.py --mock       # 통제 전부 ON + mock 응답만
+```
 
-**빌드 컨텍스트 주의**: `local_llm.py`/`prompts.py`/`documents.json`이
-`ch04/shared/`로 이동해 d01~d08 이 공유한다. 빌드 컨텍스트가 `d08/`가
-아니라 **`ch04/` 루트**여야 한다 — `cd ch04` 후 `-f d08/Dockerfile`로 빌드한다.
+### Docker — 선택 실습 (mock 전용)
+
+Docker 이미지의 기본 CMD는 항상 `--mock`을 붙여 실행한다(Lab 1·2만
+해당, Lab 3은 원래 플래그가 없다). 실제 모델 검증은 위 "로컬 (venv)"
+절대로 진행한다.
+
+**빌드 컨텍스트 주의**: `local_llm.py`가 `ch04/d00-shared/`로 이동해
+d01~d08 이 공유한다(`documents.json`/`prompts.py`는 이 폴더 로컬 파일).
+빌드 컨텍스트가 `d08/`가 아니라 **`ch04/` 루트**여야 한다 — `cd ch04` 후
+`-f d08/Dockerfile`로 빌드한다.
 
 ```
 cd ch04
 docker build -f d08/Dockerfile -t e2e-security-demo .
 docker run --rm e2e-security-demo                                  # 세 Lab 순차 실행
-docker run --rm e2e-security-demo python vulnerable_e2e.py         # Lab 1만
-docker run --rm e2e-security-demo python secure_e2e.py             # Lab 2만
+docker run --rm e2e-security-demo python vulnerable_e2e.py --mock  # Lab 1만
+docker run --rm e2e-security-demo python secure_e2e.py --mock      # Lab 2만
 docker run --rm e2e-security-demo python gap_analysis.py           # Lab 3만
-```
-
-### 실제 모델(Ollama)로 검증 — 선택 사항 (Lab 1·2)
-
-Lab 1/2의 응답은 기본적으로 f-string으로 조립된 mock이다 — 인젝션 차단/
-ACL/등급 필터/retrieval 재검증/canary 스캔은 전부 실제 로직이 돌지만,
-"최종적으로 모델이 뭐라고 답하는가"는 재현하지 않는다. `--real` 플래그는
-`handle_query(..., use_real_llm=True)`로 **응답 생성 단계만** 로컬
-Ollama 모델 호출로 교체한다 — 나머지 6개 통제는 그대로다.
-
-```
-brew install ollama && ollama serve
-ollama pull llama3.2:1b
-
-python vulnerable_e2e.py --real   # 통제 전부 OFF + 실제 모델 응답
-python secure_e2e.py --real       # 통제 전부 ON + 실제 모델 응답
-```
-
-Lab 3(`gap_analysis.py`)에는 `--real`이 없다 — 항목별 isolate 테스트는
-결정론적 단위 검증이 목적이라 mock 이 더 적합하다. Ollama가 실행 중이
-아니면 안내 메시지를 출력하고 mock 결과만으로 종료한다(기본 `assert`
-실행에는 영향 없음). 실제 모델 경로는 비결정적이라 `assert` 없이 결과만
-출력한다.
-
-**Docker 컨테이너에서 `--real` 실행 시**: `OLLAMA_HOST`(기본값
-`http://localhost:11434`)를 재정의해야 한다 — 컨테이너 안의 `localhost`는
-컨테이너 자신이라 호스트의 Ollama에 연결되지 않는다.
-```
-# macOS/Windows (Docker Desktop)
-docker run --rm -e OLLAMA_HOST=http://host.docker.internal:11434 \
-  e2e-security-demo python vulnerable_e2e.py --real
-
-# Linux
-docker run --rm --network host \
-  e2e-security-demo python vulnerable_e2e.py --real
 ```
 
 ## Lab 1: Vulnerable E2E
@@ -111,8 +99,8 @@ docker run --rm --network host \
 - **파이프라인**: `PipelineConfig()` 기본값 — 7개 통제 전부 OFF.
 - **결과**: 인젝션 문구 수용, 권한 밖 문서 인용, canary 응답에 그대로
   노출, 감사 이벤트 0건 — 📊 실습 결과 표의 Vulnerable 열과 정확히 일치.
-- **`--real`**: 응답 생성만 로컬 Ollama 모델로 교체 — 필터링되지 않은
-  컨텍스트를 실제 모델이 받으면 실제로 뭐라고 답하는지 관찰.
+- **실제 모델(기본 실습)**: 응답 생성만 Ollama 모델로 교체 — 필터링되지
+  않은 컨텍스트를 실제 모델이 받으면 실제로 뭐라고 답하는지 관찰.
 
 ## Lab 2: Secure E2E
 
@@ -124,8 +112,8 @@ docker run --rm --network host \
   (`prompt_injection_blocked`, `jailbreak_resisted`,
   `retrieval_revalidated`, `canary_scan_performed`) 기록 — 📊 실습 결과
   표의 Secure 열과 정확히 일치.
-- **`--real`**: Lab 1과 완전히 동일한 시나리오·입력으로, 응답 생성만
-  로컬 Ollama 모델로 교체 — 방어선이 켜진 상태에서 실제 모델이 받는
+- **실제 모델(기본 실습)**: Lab 1과 완전히 동일한 시나리오·입력으로, 응답 생성만
+  Ollama 모델로 교체 — 방어선이 켜진 상태에서 실제 모델이 받는
   (정제된) 컨텍스트/질의가 실제로 안전한 답변으로 이어지는지 관찰.
 
 ## Lab 3: 갭 분석 (체크리스트 7항 자체 채점)
@@ -166,7 +154,7 @@ Lab 1/2는 "통제를 전부 껐다/켰다"만 비교한다 — 7개를 한꺼�
 - 세 Lab 모두 mock 기반 결정론적 시뮬레이션이며 단일 공격 시나리오만
   사용한다. 실제 배포 전에는 다양한 인젝션·탈옥 변형과 실제 벡터 DB
   환경을 대상으로 한 침투 테스트가 필요하다.
-- `--real`은 응답 생성 **한 단계만** 실제 모델로 교체할 뿐, 인젝션/탈옥
+- 실제 모델 경로는 응답 생성 **한 단계만** 실제 모델로 교체할 뿐, 인젝션/탈옥
   탐지 자체는 여전히 정규식 기반 mock 로직이다. 즉 "이 파이프라인이 실제
   모델에서도 안전하다"는 걸 증명하지 않는다 — 증명하는 건 "필터링된
   컨텍스트를 받은 실제 모델이 최종 답변에서 위험한 내용을 추가로 만들어

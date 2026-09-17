@@ -42,14 +42,11 @@ class Verdict:
 def load_canary_documents(path: str = "documents.json") -> List[Document]:
     """canary_token이 심어진 실습용 decoy 문서 세트를 로드한다.
 
-    ch04/shared/documents.json 을 공유한다(d05~d08 이 같은 문서 세트를 쓴다) —
-    이 폴더에는 로컬 복사본이 없다. 공유 세트에는 canary_token 이 없는 일반
-    문서도 섞여 있으므로, canary_token 이 실제로 있는 문서만 골라 쓰고
-    (Document 가 모르는 나머지 필드는 무시한다).
+    이 폴더 전용 로컬 복사본을 쓴다(d00-shared 공유 없음). 세트에는
+    canary_token 이 없는 일반 문서도 섞여 있으므로, canary_token 이 실제로
+    있는 문서만 골라 쓰고(Document 가 모르는 나머지 필드는 무시한다).
     """
-    here = Path(__file__).resolve().parent
-    shared_candidate = here.parent / "shared" / path
-    doc_path = shared_candidate if shared_candidate.exists() else here / path
+    doc_path = Path(__file__).resolve().parent / path
     with open(doc_path, encoding="utf-8") as f:
         raw = json.load(f)
     valid_fields = {field_.name for field_ in dataclasses.fields(Document)}

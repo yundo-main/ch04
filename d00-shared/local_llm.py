@@ -1,20 +1,23 @@
 # local_llm.py
 # =============================================================================
-# ch04/d01~d08 이 공유하는 로컬 Ollama HTTP 클라이언트.
+# ch04/d01~d08 이 공유하는 로컬 Ollama HTTP 클라이언트 — 전송 계층만 담당한다.
 #
-# 각 챕터는 이 파일을 직접 import 하지 않는다 — 대신 자기 폴더의 real_llm.py
-# (얇은 wrapper)가 sys.path 로 이 디렉터리를 찾아 chat_messages()/ask_real()을
-# 가져오고, 그 위에 자기 챕터 전용 공격 시나리오(프롬프트 구성) 함수를 얹는다.
-# 예: d02/real_llm.py 의 persona_jailbreak_real() 는 chat_messages() 를
-# 호출해서 실제 모델에 페르소나 탈옥 시도를 보낸다.
+# 이 파일은 어떤 챕터의 시나리오(공격 프롬프트 구성, 판정 로직)도 모른다.
+# 각 챕터는 이 파일을 자기 폴더의 메인 스크립트에서 직접 import 해서 쓴다 —
+# 챕터마다 별도의 real_llm.py wrapper를 두지 않는다(이전에는 각 챕터에
+# `real_llm.py`라는 중간 계층이 있었지만, 스크립트 하나당 계층이 두 겹이 되는
+# 게 불필요한 간접화라고 판단해 없앴다). 예: d02/persona_jailbreak.py 는 이
+# 파일의 chat_messages() 를 직접 호출해서 실제 모델에 페르소나 탈옥 시도를
+# 보낸다.
 #
 # 사전 준비
 #   1) Ollama 설치 및 데몬 실행 (macOS): brew install ollama && ollama serve
-#   2) 소형 모델 pull: ollama pull llama3.2:1b
+#   2) 모델 pull: ollama pull exaone3.5:2.4b
 #
 # 외부 API 나 시크릿이 필요 없다 — 전부 localhost:11434 로 로컬 호출.
-# OLLAMA_HOST 환경변수로 재정의 가능(Docker 컨테이너에서 호스트의 Ollama에
-# 연결할 때 필요 — 각 챕터 guide.md의 "Docker 컨테이너에서 --real 실행 시" 참고).
+# OLLAMA_HOST 환경변수로 재정의 가능(다만 Docker 실습은 mock 전용 정책이라
+# 이 파일의 네트워크 호출 자체가 컨테이너 안에서 쓰이지 않는다 — d00-shared/
+# guide.md 참고).
 #
 # 잔여 위험: 실제 모델은 버전/온도(temperature)/문구에 따라 결과가 달라진다
 # (비결정적일 수 있음). 이 클라이언트로 얻은 결과 하나로 "이 모델은 안전/
@@ -31,7 +34,7 @@ from dataclasses import dataclass
 from typing import List
 
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-DEFAULT_MODEL = "llama3.2:1b"
+DEFAULT_MODEL = "exaone3.5:2.4b"
 
 
 @dataclass
@@ -56,7 +59,7 @@ def chat_messages(model: str, messages: List[dict], timeout: float = 60.0) -> Re
     시스템/사용자 메시지를 어떻게 나눌지(또는 하나로 합칠지)는 호출부가
     결정한다 — 그 구성 자체가 각 예제의 "취약/보안 경로" 차이이기 때문이다.
     """
-    payload = {"model": model, "messages": messages, "stream": False, "options": {"temperature": 0.2}}
+    payload = {"model": model, "messages": messages, "stream": False, "options": {"temperature": 0.7}}
     req = urllib.request.Request(
         f"{OLLAMA_HOST}/api/chat",
         data=json.dumps(payload).encode("utf-8"),

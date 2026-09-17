@@ -1,0 +1,74 @@
+[
+  {
+    "doc_id": "helpcenter-return-policy",
+    "classification": "public",
+    "owner": "support-team",
+    "allowed_roles": ["guest", "employee", "admin"],
+    "canary_token": null,
+    "tenant_id": "acme",
+    "text": "제품 반품은 구매 후 14일 이내, 미개봉 상태에 한해 접수됩니다."
+  },
+  {
+    "doc_id": "helpcenter-shipping-faq",
+    "classification": "public",
+    "owner": "support-team",
+    "allowed_roles": ["guest", "employee", "admin"],
+    "canary_token": null,
+    "tenant_id": "acme",
+    "text": "배송은 결제 완료 후 평균 2~3영업일 소요됩니다."
+  },
+  {
+    "doc_id": "internal-oncall-runbook",
+    "classification": "internal",
+    "owner": "platform-ops",
+    "allowed_roles": ["employee", "admin"],
+    "canary_token": null,
+    "tenant_id": "acme",
+    "text": "야간 장애 대응 온콜 절차: 1) 알림 확인 2) 담당자 호출 3) 상황실 채널 공유."
+  },
+  {
+    "doc_id": "confidential-customer-case-2025-041",
+    "classification": "confidential",
+    "owner": "sales-ops",
+    "allowed_roles": ["sales-ops", "admin"],
+    "canary_token": null,
+    "tenant_id": "acme",
+    "text": "[고객 사례] 계약 갱신 협상 메모 및 할인율 조정 내역. 대외비."
+  },
+  {
+    "doc_id": "confidential-vendor-contract-summary",
+    "classification": "confidential",
+    "owner": "legal",
+    "allowed_roles": ["legal", "admin"],
+    "canary_token": "CANARY-71C205-LEGAL",
+    "tenant_id": "acme",
+    "text": "[대외비] 주요 공급사 계약 요약: 단가, 최소 발주 수량, 위약 조항. 문서 추적용 워터마크: CANARY-71C205-LEGAL."
+  },
+  {
+    "doc_id": "restricted-salary-review-2025h2",
+    "classification": "restricted",
+    "owner": "hr",
+    "allowed_roles": ["hr", "admin"],
+    "canary_token": "CANARY-3B77E9-HR",
+    "tenant_id": "acme",
+    "text": "[Restricted] 2025년 하반기 연봉 조정안: 개인별 인상률 및 대상자 명단. 문서 추적용 워터마크: CANARY-3B77E9-HR."
+  },
+  {
+    "doc_id": "restricted-ma-duediligence",
+    "classification": "restricted",
+    "owner": "corp-dev",
+    "allowed_roles": ["corp-dev", "admin"],
+    "canary_token": "CANARY-D410FA-MA",
+    "tenant_id": "acme",
+    "text": "[Restricted] A사 인수 실사 보고서: 재무 리스크 및 임원진 평가 포함. 문서 추적용 워터마크: CANARY-D410FA-MA."
+  },
+  {
+    "doc_id": "restricted-infra-credentials-doc",
+    "classification": "restricted",
+    "owner": "platform-security",
+    "allowed_roles": ["admin"],
+    "canary_token": "CANARY-8F2A1C-INFRA",
+    "tenant_id": "acme",
+    "text": "[Restricted] 프로덕션 인프라 접속 정보 및 비상 접근 절차. 긴급 연락처 010-1234-5678. 문서 추적용 워터마크: CANARY-8F2A1C-INFRA."
+  }
+]

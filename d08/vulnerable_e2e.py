@@ -39,6 +39,11 @@ ATTACK_QUERY = (
 
 
 def main() -> None:
+    if "--mock" not in sys.argv and not is_ollama_available():
+        print("LLM 연결 안됨: Ollama 서버(http://localhost:11434)에 연결할 수 없습니다.")
+        print("Ollama 설치/서버 실행 여부를 확인하거나 --mock으로 실행하세요.")
+        return
+
     config = PipelineConfig()  # 모든 통제 OFF
 
     print("=" * 70)
@@ -66,7 +71,7 @@ def main() -> None:
     assert len(result.audit_events) == 0, "취약 경로는 감사 이벤트가 기록되지 않아야 한다"
     print("PASS: 통제가 전부 OFF인 파이프라인에서 인젝션 수용·권한 밖 인용·canary 노출·감사 부재가 모두 재현됨을 확인.")
 
-    if "--real" in sys.argv:
+    if "--mock" not in sys.argv:
         run_real()
 
 
@@ -81,15 +86,6 @@ def run_real(model: str = DEFAULT_MODEL) -> None:
     print("=" * 70)
     print(f"[실제 모델] Ollama ({model}) 대상 재현 (Lab 1: 통제 전부 OFF)")
     print("=" * 70)
-
-    if not is_ollama_available():
-        print(
-            "Ollama 데몬에 연결할 수 없습니다 (http://localhost:11434).\n"
-            "  brew install ollama && ollama serve\n"
-            f"  ollama pull {model}\n"
-            "실행 후 다시 시도하세요."
-        )
-        return
 
     config = PipelineConfig()
     result = handle_query(

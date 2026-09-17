@@ -50,17 +50,13 @@ class Verdict:
 def load_sample_documents(path: str = "documents.json") -> List[dict]:
     """guide.md 등급 정의서에 따라 태깅된 샘플 문서 세트를 로드한다.
 
-    ch04/shared/documents.json 을 공유한다(d05~d08 이 같은 문서 세트를 쓴다) —
-    이 폴더에는 로컬 복사본이 없다. 로컬(venv) 실행 시에는 ch04/shared/ 형제
-    디렉터리에서 찾고, Docker 이미지 안(빌드 시 shared/ 를 같은 디렉터리로
-    평탄화해서 COPY 함)에서는 이 파일과 같은 디렉터리에서 찾는다.
+    이 폴더 전용 로컬 복사본을 쓴다(d00-shared 공유 없음) — 로컬(venv)/Docker
+    어디서든 이 파일과 같은 디렉터리에서 찾는다.
 
     각 문서의 classification 값이 Classification 열거형에 없는 값이면 KeyError로
     실패한다 — 등급 정의서에 없는 등급이 슬쩍 섞여 들어오는 것을 막기 위한 검증.
     """
-    here = Path(__file__).resolve().parent
-    shared_candidate = here.parent / "shared" / path
-    doc_path = shared_candidate if shared_candidate.exists() else here / path
+    doc_path = Path(__file__).resolve().parent / path
     with open(doc_path, encoding="utf-8") as f:
         raw = json.load(f)
     for doc in raw:
