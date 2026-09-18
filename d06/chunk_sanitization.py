@@ -40,7 +40,7 @@ from dataclasses import dataclass
 from typing import List
 
 from retrieval_security_mock import Verdict
-from real_llm import DEFAULT_MODEL, ask_real, is_ollama_available  # noqa: E402
+from wrapper import DEFAULT_MODEL, ask_real, is_ollama_available  # noqa: E402
 from prompts import RAG_ANSWER_SYSTEM_INSTRUCTION  # noqa: E402
 
 INJECTION_MARKERS = ["[SYSTEM]", "이전 지시를 무시", "지금부터", "시스템 명령"]

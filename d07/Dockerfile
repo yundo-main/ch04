@@ -11,7 +11,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY d00-shared/local_llm.py ./
-COPY d07/documents.json d07/prompts.py d07/canary_mock.py d07/real_llm.py d07/canary_placement.py d07/response_canary_scanning.py d07/exfiltration_simulation.py ./
+COPY d07/documents.json d07/prompts.py d07/canary_mock.py d07/wrapper.py d07/canary_placement.py d07/response_canary_scanning.py d07/exfiltration_simulation.py ./
 
 # 기본 실행: 세 예제를 순서대로 실행. Docker는 mock 전용 정책이라 예제
 # 2·3의 CMD에 --mock을 명시한다(실제 모델 검증은 로컬 venv에서 진행,

@@ -9,15 +9,15 @@ prompts.py는 d01~d08)가 로컬 복사본을 쓴다 — d00-shared에는 둘 �
 자세한 경위는 `readme.md`의 "변경이력" 참고.
 
 **설계 원칙 — wrap은 전송만, 콘텐츠는 별도**: 각 챕터에는 `local_llm.py`를
-재노출하는 얇은 `real_llm.py`가 하나씩 있다(`script → real_llm.py →
-local_llm.py`). 이 `real_llm.py`는 **순수 wrap이다** — `DEFAULT_MODEL`/
+재노출하는 얇은 `wrapper.py`가 하나씩 있다(`script → wrapper.py →
+local_llm.py`). 이 `wrapper.py`는 **순수 wrap이다** — `DEFAULT_MODEL`/
 `chat_messages`/`ask_real`/`is_ollama_available`을 그대로 다시 내보내기만
 하고, 그 이상은 아무것도 모른다. 공격 프롬프트, `SECRET_CODENAME` 같은
-**챕터 전용 콘텐츠는 `real_llm.py`에 없다** — 여러 스크립트가 공유하는
+**챕터 전용 콘텐츠는 `wrapper.py`에 없다** — 여러 스크립트가 공유하는
 콘텐츠는 그 챕터의 `prompts.py`에, 스크립트 하나만 쓰는 콘텐츠는 그
 스크립트의 `run_real()` 함수 안에 있다. "wrap은 어떻게 전송하는가만
 알고, 무엇을 보내는가는 몰라야 한다"는 원칙을 지키기 위한 구분이다 —
-예전에는 이 둘이 `real_llm.py` 한 파일에 섞여 있어서(전송 재노출 + 콘텐츠)
+예전에는 이 둘이 `wrapper.py` 한 파일에 섞여 있어서(전송 재노출 + 콘텐츠)
 혼란이 있었다.
 
 (참고: "시나리오"라는 말은 이 문서에서 아키텍처 용어로 안 쓴다 — d02
@@ -197,7 +197,7 @@ Ollama가 없으면 마지막 줄이 `SKIP: Ollama 서버(...)에 연결할 수 
 | 파일 | 역할 | 사용처 |
 | --- | --- | --- |
 | `mock_llm.py` | 가중치 기반 규칙 mock LLM 엔진(`PatternRule`/`score_text`/`naive_generate`/`guarded_generate`) | d01 |
-| `local_llm.py` | 로컬 Ollama HTTP 클라이언트(`chat_messages`/`ask_real`/`is_ollama_available`) — 각 챕터의 `real_llm.py`(순수 wrap, 내용 없음)가 재노출하고, 메인 스크립트는 그 `real_llm.py`를 import 한다 | d01~d08 |
+| `local_llm.py` | 로컬 Ollama HTTP 클라이언트(`chat_messages`/`ask_real`/`is_ollama_available`) — 각 챕터의 `wrapper.py`(순수 wrap, 내용 없음)가 재노출하고, 메인 스크립트는 그 `wrapper.py`를 import 한다 | d01~d08 |
 | `smoke_test.py` | `mock_llm.py`/`local_llm.py` 단독 동작 확인용 진단 스크립트(0단계 검증) | d00-shared 전용, 다른 dNN에서 참조 안 함 |
 
 `mock_llm.py`는 현재 d01의 카탈로그(`INJECTION_PATTERNS`)만 내장하고 있다 —
@@ -208,7 +208,7 @@ Ollama가 없으면 마지막 줄이 `SKIP: Ollama 서버(...)에 연결할 수 
 ## 각 디렉터리가 공유 파일을 찾는 방법
 
 `local_llm.py`/`mock_llm.py`는 **Python 모듈**이라, 각 디렉터리의
-`real_llm.py`(local_llm.py 재노출) 또는 d01의 메인 스크립트(mock_llm.py를
+`wrapper.py`(local_llm.py 재노출) 또는 d01의 메인 스크립트(mock_llm.py를
 직접 쓰는 경우)가 상단에서 아래처럼 `sys.path`에 이 디렉터리를 추가해서
 찾는다.
 
@@ -221,9 +221,9 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "d00-shared"))
 있는 스크립트 자신의 디렉터리보다 `d00-shared/`를 뒤에 두므로, 이름이 겹쳐도
 로컬 파일이 이긴다.
 
-각 챕터의 `real_llm.py`는 이 sys.path 추가 + 재노출만 한다 — 그 이상은
+각 챕터의 `wrapper.py`는 이 sys.path 추가 + 재노출만 한다 — 그 이상은
 모른다. 챕터 전용 콘텐츠(예: d01의 태그 기반 격리 프롬프트 조립)는
-`real_llm.py`가 아니라 각 메인 스크립트의 `run_real()` 함수 안에 직접
+`wrapper.py`가 아니라 각 메인 스크립트의 `run_real()` 함수 안에 직접
 있다. 여러 스크립트가 공유하는 콘텐츠(예: d02의 `SECRET_CODENAME`/
 `BASE_SYSTEM_INSTRUCTION` — persona/escalation/encoding 세 스크립트가
 공통으로 씀)는 그 챕터의 `prompts.py`에 있다(`REAL_*` 접두사로 mock
@@ -247,9 +247,9 @@ Docker `COPY`는 빌드 컨텍스트 밖의 파일을 가져올 수 없다. `d00
 
 ```dockerfile
 COPY d00-shared/local_llm.py ./
-COPY d06/documents.json d06/prompts.py d06/retrieval_security_mock.py d06/real_llm.py d06/retrieval_authorization_enforcement.py d06/embedding_poisoning.py d06/chunk_sanitization.py ./
+COPY d06/documents.json d06/prompts.py d06/retrieval_security_mock.py d06/wrapper.py d06/retrieval_authorization_enforcement.py d06/embedding_poisoning.py d06/chunk_sanitization.py ./
 ```
-(`documents.json`/`prompts.py`/`real_llm.py` 모두 d00-shared가 아니라 각
+(`documents.json`/`prompts.py`/`wrapper.py` 모두 d00-shared가 아니라 각
 챕터 로컬 파일 — d06처럼 여러 파일을 쓰는 챕터는 COPY 목록에서 자기
 자신의 로컬 복사본을 가져온다.)
 
@@ -265,7 +265,7 @@ Docker 없이도, 각 `Dockerfile`의 `COPY` 목록대로 파일을 한 디렉�
 스크립트를 실행해보면 동일한 결과를 확인할 수 있다.)
 
 **Ollama는 Docker에서 쓰지 않는다.** `local_llm.py`가 각 `Dockerfile`에
-COPY되는 이유는 각 챕터의 `real_llm.py`가 이 파일을 무조건 `import`하기
+COPY되는 이유는 각 챕터의 `wrapper.py`가 이 파일을 무조건 `import`하기
 때문이지(안 넣으면 `ModuleNotFoundError`), 컨테이너 안에서 실제 Ollama
 서버에 연결하기 위해서가 아니다. Docker 실습은 mock 전용 정책이라
 `--mock` 플래그를 CMD에 명시하고, 그래서 컨테이너 안에서
@@ -286,11 +286,11 @@ docker build -f d06/Dockerfile -t retrieval-security-demo .
 
 ## 잔여 위험
 
-- **콘텐츠는 `real_llm.py`가 아니라 `prompts.py`/스크립트에 있다**: d02의
+- **콘텐츠는 `wrapper.py`가 아니라 `prompts.py`/스크립트에 있다**: d02의
   `SECRET_CODENAME`/`BASE_SYSTEM_INSTRUCTION`은 `prompts.py`의 `REAL_*`
   상수로 한 번만 정의되고 세 스크립트(persona/escalation/encoding)가
-  그걸 가져다 쓴다 — `real_llm.py`(wrap)에 넣지 않으면서도 중복 없이
-  공유한 것이다. `real_llm.py`는 여전히 이 콘텐츠를 전혀 모른다.
+  그걸 가져다 쓴다 — `wrapper.py`에 넣지 않으면서도 중복 없이
+  공유한 것이다. `wrapper.py`는 여전히 이 콘텐츠를 전혀 모른다.
 - d05~d08의 `documents.json`은 지금 전부 **동일한 내용의 로컬 복사본**이다
   (d00-shared 공유를 그만두면서 물리적으로 4벌로 나뉨). 8개 문서 중 일부
   (`restricted-*`)는 canary_token이 붙어 있어, canary와 무관한 챕터(d05,

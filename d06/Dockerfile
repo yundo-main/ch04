@@ -11,7 +11,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY d00-shared/local_llm.py ./
-COPY d06/documents.json d06/prompts.py d06/retrieval_security_mock.py d06/real_llm.py d06/retrieval_authorization_enforcement.py d06/embedding_poisoning.py d06/chunk_sanitization.py ./
+COPY d06/documents.json d06/prompts.py d06/retrieval_security_mock.py d06/wrapper.py d06/retrieval_authorization_enforcement.py d06/embedding_poisoning.py d06/chunk_sanitization.py ./
 
 # 기본 실행: 세 예제를 순서대로 실행. Docker는 mock 전용 정책이라 예제 3의
 # CMD에 --mock을 명시한다(실제 모델 검증은 로컬 venv에서 진행).

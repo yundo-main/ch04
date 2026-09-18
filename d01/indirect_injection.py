@@ -39,7 +39,7 @@ from typing import List
 sys.path.append(str(Path(__file__).resolve().parent.parent / "d00-shared"))  # 로컬 동명 파일이 있으면 그게 우선
 
 from mock_llm import GenerationResult, guarded_generate, naive_generate  # noqa: E402
-from real_llm import DEFAULT_MODEL, chat_messages, is_ollama_available  # noqa: E402
+from wrapper import DEFAULT_MODEL, chat_messages, is_ollama_available  # noqa: E402
 from prompts import (
     INDIRECT_SYSTEM_INSTRUCTION as SYSTEM_INSTRUCTION,
     INDIRECT_USER_QUESTION,

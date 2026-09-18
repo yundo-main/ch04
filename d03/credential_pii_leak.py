@@ -35,7 +35,7 @@ import re
 import sys
 
 from leakage_mock import Verdict
-from real_llm import DEFAULT_MODEL, ask_real, is_ollama_available  # noqa: E402
+from wrapper import DEFAULT_MODEL, ask_real, is_ollama_available  # noqa: E402
 from prompts import CODE_REVIEW_SYSTEM_INSTRUCTION, USER_PASTE  # noqa: E402
 
 _API_KEY_PATTERN = re.compile(r"sk-[A-Za-z0-9_-]{20,}")

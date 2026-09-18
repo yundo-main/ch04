@@ -19,10 +19,10 @@ Poisoning & Chunk Sanitization)을 코드로 재현한다.
 | `documents.json` | **실습용 문서** — classification/allowed_roles/canary_token 이 모두 태깅된 샘플 문서 세트. 이 폴더 전용 로컬 복사본(d00-shared 공유 없음) — d05/d07/d08도 같은 내용을 각자 로컬로 갖고 있다 | 예제 1의 검색 대상 인덱스 |
 | `prompts.py` | 실제 모델 테스트용 시스템 지시문(`RAG_ANSWER_SYSTEM_INSTRUCTION`). 이 폴더 로컬 파일(d00-shared 공유 없음) — d03(예제2)/d07/d08도 각자 로컬로 동일한 값을 갖고 있다 | 예제 3(`chunk_sanitization.py`, 기본 실습) |
 | `retrieval_security_mock.py` | 공용 타입(`Classification`, `Clearance`, `Verdict`). 세 예제가 함께 쓴다 | ch04/d05 등급 정의서와 동일 체계 |
-| `real_llm.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 시나리오 콘텐츠 없음 | — |
+| `wrapper.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 시나리오 콘텐츠 없음 | — |
 | `retrieval_authorization_enforcement.py` | 예제 1: Retrieval 단계 권한 재검증 — 동일 쿼리·다른 사용자 결과 집합 비교 | Lab 1, Lab 2 |
 | `embedding_poisoning.py` | 예제 2: 임베딩 포이즈닝 — 인제스트 단계 이상 탐지 부재 | Embedding Poisoning |
-| `chunk_sanitization.py` | 예제 3: 청크 새니타이징 — 컨텍스트 조립 전 검증 부재. `run_real()`이 `real_llm.py`(wrap)를 호출해 기본 실행 시 실제 모델까지 재현한다 | Chunk Sanitization |
+| `chunk_sanitization.py` | 예제 3: 청크 새니타이징 — 컨텍스트 조립 전 검증 부재. `run_real()`이 `wrapper.py`를 호출해 기본 실행 시 실제 모델까지 재현한다 | Chunk Sanitization |
 | `Dockerfile` | 의존성 없이 컨테이너에서 실행하기 위한 이미지 정의 (`d01~d05` 패턴) | — |
 | `readme.md` | 사용자 작성 브리프 | — |
 

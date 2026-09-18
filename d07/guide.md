@@ -19,9 +19,9 @@
 | `documents.json` | **실습용 문서** — classification/allowed_roles/canary_token 이 모두 태깅된 샘플 문서 세트. 이 폴더 전용 로컬 복사본(d00-shared 공유 없음) — d05/d06/d08도 같은 내용을 각자 로컬로 갖고 있다. 이 폴더는 그중 `canary_token` 이 있는 문서만 골라 쓴다(Restricted/Confidential decoy) | Lab 1 |
 | `prompts.py` | 실제 모델 테스트용 시스템 지시문(`RAG_ANSWER_SYSTEM_INSTRUCTION`). 이 폴더 로컬 파일(d00-shared 공유 없음) — d03(예제2)/d06/d08도 각자 로컬로 동일한 값을 갖고 있다 | 예제 2·3(기본 실습) |
 | `canary_mock.py` | 공용 타입(`Document`, `Verdict`) + `load_canary_documents()` | — |
-| `real_llm.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 시나리오 콘텐츠 없음 | — |
+| `wrapper.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 시나리오 콘텐츠 없음 | — |
 | `canary_placement.py` | 예제 1: canary 배치 — 재사용 canary로 인한 출처 특정(attribution) 실패 | Lab 1 |
-| `response_canary_scanning.py` | 예제 2: 응답 canary 스캐닝 — 출력 검사 없이 그대로 반환. `run_real()`이 `real_llm.py`(wrap)를 호출해 기본 실행 시 자동으로 실제 모델까지 재현한다 | Lab 2 |
+| `response_canary_scanning.py` | 예제 2: 응답 canary 스캐닝 — 출력 검사 없이 그대로 반환. `run_real()`이 `wrapper.py`를 호출해 기본 실행 시 자동으로 실제 모델까지 재현한다 | Lab 2 |
 | `exfiltration_simulation.py` | 예제 3: 유출 시뮬레이션 — 인코딩 우회에 대한 탐지 한계. 마찬가지로 `run_real()` 포함 | Lab 3 |
 | `Dockerfile` | 의존성 없이 컨테이너에서 실행하기 위한 이미지 정의 (`d01~d06` 패턴) | — |
 | `readme.md` | 사용자 작성 브리프 | — |

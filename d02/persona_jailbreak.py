@@ -31,7 +31,7 @@ import re
 import sys
 
 from jailbreak_mock import Verdict
-from real_llm import DEFAULT_MODEL, chat_messages, is_ollama_available  # noqa: E402
+from wrapper import DEFAULT_MODEL, chat_messages, is_ollama_available  # noqa: E402
 from prompts import (  # noqa: E402
     PERSONA_ATTACKER_INPUT as ATTACKER_INPUT,
     PERSONA_SIMULATED_UNSAFE_CONTENT as _SIMULATED_UNSAFE_CONTENT,

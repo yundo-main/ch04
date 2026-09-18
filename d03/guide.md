@@ -14,8 +14,8 @@ Leakage, Memory Poisoning)를 코드로 재현한다.
 |---|---|---|
 | `leakage_mock.py` | 공용 결과 타입(`Verdict`). 세 예제가 함께 쓴다 | — |
 | `prompts.py` | 세 예제의 프롬프트 텍스트 전부(`CODE_REVIEW_SYSTEM_INSTRUCTION`/`USER_PASTE`/`MULTITENANT_QUERY`/`MEMORY_RECALL_*`/`RAG_ANSWER_SYSTEM_INSTRUCTION`). 이 폴더 로컬 파일(d00-shared 공유 없음) — `RAG_ANSWER_SYSTEM_INSTRUCTION`은 d06/d07/d08도 각자 로컬로 동일한 값을 갖고 있다 | 예제 2(기본 실습)는 `RAG_ANSWER_SYSTEM_INSTRUCTION` 사용 |
-| `real_llm.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 시나리오 콘텐츠 없음 | — |
-| `credential_pii_leak.py` | 예제 1: 자격증명/PII 유출 (Context Redaction 미적용). `run_real()`이 `real_llm.py`(wrap)를 호출해 기본 실행 시 실제 모델까지 재현한다 | 시나리오 A, 경로 P1·P5 |
+| `wrapper.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 시나리오 콘텐츠 없음 | — |
+| `credential_pii_leak.py` | 예제 1: 자격증명/PII 유출 (Context Redaction 미적용). `run_real()`이 `wrapper.py`를 호출해 기본 실행 시 실제 모델까지 재현한다 | 시나리오 A, 경로 P1·P5 |
 | `multitenant_rag_leak.py` | 예제 2: RAG 교차 테넌트 데이터 유출 (ACL 누락). 마찬가지로 `run_real()` 포함 | 시나리오 B, 경로 P3 |
 | `memory_poisoning_leak.py` | 예제 3: 메모리 포이즈닝을 통한 세션 간 지속 유출. 마찬가지로 `run_real()` 포함 | 용어 "Memory Poisoning", 경로 P6 |
 | `Dockerfile` | 의존성 없이 컨테이너에서 실행하기 위한 이미지 정의 (`d01`/`d02` 패턴) |  |

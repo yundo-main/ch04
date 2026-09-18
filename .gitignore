@@ -14,3 +14,6 @@ plan.md
 # 모델 가중치 (직접 다운로드, 버전관리 대상 아님 — d00-shared/guide.md 0단계 참고)
 models/
 *.gguf
+
+# 로컬 환경변수 (OLLAMA_HOST/OLLAMA_MODEL 등 개인 설정 — d00-shared/.env.example 참고)
+.env

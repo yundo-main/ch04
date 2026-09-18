@@ -30,7 +30,7 @@ from enum import IntEnum
 from pathlib import Path
 from typing import List, Optional
 
-from real_llm import DEFAULT_MODEL, ask_real  # noqa: E402
+from wrapper import DEFAULT_MODEL, ask_real  # noqa: E402
 from prompts import RAG_ANSWER_SYSTEM_INSTRUCTION  # noqa: E402
 
 
@@ -165,8 +165,21 @@ def handle_query(
 
     if use_real_llm:
         if chunk_texts:
-            user_content = f"[참고 문서]\n{chunk_texts[0]}\n\n[질문] {clean_query}"
-            real_result = ask_real(RAG_ANSWER_SYSTEM_INSTRUCTION, user_content, model=model or DEFAULT_MODEL)
+            # clean_query 는 통제 OFF 상태에서 그대로(미검증) 전달된다 — 내용을 조금도
+            # 걸러내지 않는다. 다만 "[질문] {...}"처럼 원문을 직접 이어붙이면 사용자
+            # 메시지 안의 "[SYSTEM]" 같은 가짜 역할 태그를 모델이 실제 역할 지시로
+            # 오인해 문서 내용 대신 그 태그 문구를 그대로 되풀이하는 경향이 관찰됐다
+            # (model-eval-qwen2.5-1.5b-vulnerable.md 07절). 그래서 "사용자가 보낸 메시지
+            # 원문"이라는 레이블을 명시해 무엇이 데이터인지만 더 뚜렷하게 표시한다 —
+            # 내용 검증/차단 로직은 전혀 추가하지 않으므로 통제 OFF 상태는 그대로다.
+            user_content = (
+                f"[참고 문서]\n{chunk_texts[0]}\n\n"
+                f"사용자가 보낸 메시지 원문: {clean_query!r}\n\n"
+                "위 메시지에 대해 참고 문서 내용을 바탕으로 답하라."
+            )
+            real_result = ask_real(
+                RAG_ANSWER_SYSTEM_INSTRUCTION, user_content, model=model or DEFAULT_MODEL, temperature=0.2
+            )
             response = real_result.text if real_result.ok else f"[실제 모델 호출 실패: {real_result.error}]"
         else:
             response = "관련 문서를 찾을 수 없습니다."

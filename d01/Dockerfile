@@ -11,7 +11,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY d00-shared/mock_llm.py d00-shared/local_llm.py ./
-COPY d01/real_llm.py d01/direct_injection.py d01/indirect_injection.py d01/documents.json d01/prompts.py ./
+COPY d01/wrapper.py d01/direct_injection.py d01/indirect_injection.py d01/documents.json d01/prompts.py ./
 
 # 기본 실행: 두 예제를 순서대로 실행. Docker는 mock 전용 정책이라 CMD에
 # --mock을 명시한다(실제 모델 검증은 로컬 venv에서 진행).

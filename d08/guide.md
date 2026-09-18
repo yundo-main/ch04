@@ -16,8 +16,8 @@ Lab 3 갭 분석 — 체크리스트 7항 자체 채점)을 코드로 재현한�
 |---|---|---|
 | `documents.json` | **실습용 문서** — classification(d05) + allowed_roles(d04) + canary_token(d07)을 모두 갖춘 통합 샘플 문서 세트. 이 폴더 전용 로컬 복사본(d00-shared 공유 없음) — d05/d06/d07도 같은 내용을 각자 로컬로 갖고 있다 | Lab 1/2의 검색 대상 인덱스 |
 | `prompts.py` | 실제 모델 테스트용 시스템 지시문(`RAG_ANSWER_SYSTEM_INSTRUCTION`). 이 폴더 로컬 파일(d00-shared 공유 없음) — d03(예제2)/d06/d07도 각자 로컬로 동일한 값을 갖고 있다 | Lab 1·2(기본 실습) |
-| `real_llm.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 시나리오 콘텐츠 없음 | — |
-| `e2e_pipeline.py` | 공용 파이프라인 — `PipelineConfig`의 7개 플래그가 d01~d07 통제와 1:1 대응, `handle_query()`가 질의 정제→검색→재검증→응답 조립→canary 스캔을 순서대로 실행. `handle_query(..., use_real_llm=True)`가 응답 조립 단계에서만 `real_llm.py`(wrap)로 교체해서 쓴다 | d01~d07 통합 |
+| `wrapper.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 시나리오 콘텐츠 없음 | — |
+| `e2e_pipeline.py` | 공용 파이프라인 — `PipelineConfig`의 7개 플래그가 d01~d07 통제와 1:1 대응, `handle_query()`가 질의 정제→검색→재검증→응답 조립→canary 스캔을 순서대로 실행. `handle_query(..., use_real_llm=True)`가 응답 조립 단계에서만 `wrapper.py`로 교체해서 쓴다 | d01~d07 통합 |
 | `vulnerable_e2e.py` | Lab 1: 통제 전부 OFF — 동일 시나리오의 실패 모드 기록 | Lab 1 |
 | `secure_e2e.py` | Lab 2: 통제 전부 ON — 동일 시나리오의 차단·필터·감사 확인 | Lab 2 |
 | `gap_analysis.py` | Lab 3: 통제를 하나씩만 켜서 7항 각각을 개별 채점 | Lab 3 |

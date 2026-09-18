@@ -11,7 +11,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY d00-shared/local_llm.py ./
-COPY d03/leakage_mock.py d03/real_llm.py d03/credential_pii_leak.py d03/multitenant_rag_leak.py d03/memory_poisoning_leak.py d03/prompts.py ./
+COPY d03/leakage_mock.py d03/wrapper.py d03/credential_pii_leak.py d03/multitenant_rag_leak.py d03/memory_poisoning_leak.py d03/prompts.py ./
 
 # 기본 실행: 세 예제를 순서대로 실행. Docker는 mock 전용 정책이라 CMD에
 # --mock을 명시한다(실제 모델 검증은 로컬 venv에서 진행).

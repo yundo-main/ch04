@@ -11,7 +11,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 COPY d00-shared/local_llm.py ./
-COPY d08/documents.json d08/prompts.py d08/real_llm.py d08/e2e_pipeline.py d08/vulnerable_e2e.py d08/secure_e2e.py d08/gap_analysis.py ./
+COPY d08/documents.json d08/prompts.py d08/wrapper.py d08/e2e_pipeline.py d08/vulnerable_e2e.py d08/secure_e2e.py d08/gap_analysis.py ./
 
 # 기본 실행: 세 Lab을 순서대로 실행. Docker는 mock 전용 정책이라 Lab 1·2의
 # CMD에 --mock을 명시한다(실제 모델 검증은 로컬 venv에서 진행, Lab 3은

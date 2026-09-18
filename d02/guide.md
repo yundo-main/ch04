@@ -10,15 +10,15 @@
 |---|---|
 | `jailbreak_mock.py` | 공용 결과 타입(`Verdict`). 세 예제가 함께 쓴다 |
 | `prompts.py` | 세 예제의 mock 콘텐츠(`PERSONA_*`/`ESCALATION_*`/`ENCODING_*`) + 세 스크립트가 공유하는 REAL 전용 콘텐츠(`REAL_SECRET_CODENAME`/`REAL_BASE_SYSTEM_INSTRUCTION`). 이 폴더 로컬 파일(d00-shared 공유 없음). `SYSTEM_INSTRUCTION`의 첫 문장("당신은 안전 정책을 준수하는 AI 어시스턴트입니다.")이 세 예제에 글자 그대로 중복돼 있던 걸 `SAFETY_POLICY_PREFIX`로 뽑아 공통화했고, 위험 카테고리를 나열하는 두 번째 문장은 예제마다 의도적으로 다르므로 각 상수에 그대로 남아 있다. **주의**: mock 상수(`PERSONA_*` 등)는 실제 모델(`run_real()`) 경로에서 안 쓰인다 — REAL 상수와는 별개다(아래 참고) |
-| `real_llm.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 콘텐츠는 없음(`prompts.py`/각 스크립트에 있음) |
-| `persona_jailbreak.py` | 예제 1: 페르소나/역할극 탈옥 ("DAN" 류). `run_real()`이 `real_llm.py`(wrap)를 호출해 기본 실행 시 자동으로 실제 모델까지 재현한다(`--mock`이면 건너뜀). **`prompts.py`의 mock 상수(`PERSONA_*`)를 쓰지 않고, `prompts.py`의 `REAL_SECRET_CODENAME`/`REAL_BASE_SYSTEM_INSTRUCTION`(완전히 다른 안전한 대리 콘텐츠)을 가져다 쓴다** |
+| `wrapper.py` | `d00-shared/local_llm.py`를 그대로 재노출하는 순수 wrap — 콘텐츠는 없음(`prompts.py`/각 스크립트에 있음) |
+| `persona_jailbreak.py` | 예제 1: 페르소나/역할극 탈옥 ("DAN" 류). `run_real()`이 `wrapper.py`를 호출해 기본 실행 시 자동으로 실제 모델까지 재현한다(`--mock`이면 건너뜀). **`prompts.py`의 mock 상수(`PERSONA_*`)를 쓰지 않고, `prompts.py`의 `REAL_SECRET_CODENAME`/`REAL_BASE_SYSTEM_INSTRUCTION`(완전히 다른 안전한 대리 콘텐츠)을 가져다 쓴다** |
 | `escalation_jailbreak.py` | 예제 2: 다중 턴 점진적 유도 탈옥 ("Crescendo" 류). 마찬가지로 `run_real()` + `prompts.py`의 `REAL_*` 콘텐츠 사용 |
 | `encoding_jailbreak.py` | 예제 3: 인코딩/난독화 우회 탈옥 (Base64 류). 마찬가지로 `run_real()` + `prompts.py`의 `REAL_*` 콘텐츠 사용 |
 | `Dockerfile` | 의존성 없이 컨테이너에서 실행하기 위한 이미지 정의 (`ch04/d01` 패턴 참고) |
 | `readme.md` | 사용자 작성 브리프 |
 
 세 스크립트가 쓰는 `REAL_SECRET_CODENAME`/`REAL_BASE_SYSTEM_INSTRUCTION`은
-`prompts.py`에 **한 번만** 정의돼 있다 — `real_llm.py`(순수 wrap)에는 넣지
+`prompts.py`에 **한 번만** 정의돼 있다 — `wrapper.py`(순수 wrap)에는 넣지
 않는다("wrap은 무엇을 보내는지 몰라야 한다"는 원칙 때문). 콘텐츠를 공유하는
 파일과 전송을 담당하는 wrap이 분리돼 있고, 그 사이에 중복도 없다.
 

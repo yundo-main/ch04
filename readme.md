@@ -358,6 +358,24 @@ in text.lower()`로 바꿨다(대소문자·접두사 누락에 영향을 안 �
 검증: 반복 실행해서 완전 유출/부분 유출/완전 할루시네이션 세 가지 경우가
 각각 True/True/False로 올바르게 갈리는 것을 직접 확인했다.
 
+### real_llm.py → wrapper.py 파일명 변경
+
+지금까지 여러 차례 확인한 것처럼 이 파일은 순수 wrap(전송 재노출, 콘텐츠
+없음)이다. "real_llm"이라는 이름은 애초에 "옆의 mock 파일(`jailbreak_mock.py`
+등)과 짝을 이루는 이름"이라는 근거로 유지해왔는데, 다시 보니 그 짝 관계가
+정확하지 않았다 — mock 쪽 파일은 챕터마다 도메인을 반영한 다른 이름
+(`jailbreak_mock.py`/`leakage_mock.py`/`canary_mock.py`/
+`retrieval_security_mock.py`)인 반면, 이 파일은 6개 챕터 전부 똑같은
+이름·내용(콘텐츠 없는 전송 재노출)이다. 오히려 "6개 챕터가 다 똑같다"는
+사실 자체가 "이건 도메인 로직이 아니라 배관(wrap)일 뿐"이라는 신호이므로,
+파일 역할을 그대로 이름에 반영해 `real_llm.py` → `wrapper.py`로 바꿨다.
+
+6개 챕터(d01/d02/d03/d06/d07/d08) 전부에서 파일명, `from real_llm import`
+→ `from wrapper import`, Dockerfile의 `COPY ... real_llm.py` →
+`wrapper.py`, 각 `guide.md`/`d00-shared/guide.md`/`d00-shared/local_llm.py`
+헤더 주석의 자기참조를 함께 고쳤다. 동작은 이름만 바뀐 것이므로 변경 없음 —
+13개 스크립트 전부 `--mock`/실제 모델 양쪽 재실행해 회귀 없음을 확인했다.
+
 ## 수정 계획
 1. local_llm.py 를 실행이 기본 실습 
 - mock_llm 은 docker 로만 진행 , 선택 실습

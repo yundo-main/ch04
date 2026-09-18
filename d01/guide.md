@@ -8,8 +8,8 @@ API 키 없이 재현 가능한 프롬프트 인젝션(Prompt Injection) 실습 
 | 파일 | 역할 |
 |---|---|
 | `ch04/d00-shared/mock_llm.py` | **(공유)** 가중치 기반 규칙 mock 엔진. ch04/d01~d08 이 공유하며, 이 폴더에는 로컬 복사본이 없다 — `sys.path`로 찾아 import 한다 |
-| `ch04/d00-shared/local_llm.py` | **(공유)** 실제 로컬 소형 LLM(Ollama, HTTP API) 클라이언트. `real_llm.py`가 재노출해서 d01~d08 이 그 wrap을 통해 쓴다 |
-| `real_llm.py` | `local_llm.py`를 그대로 재노출하는 순수 wrap. 시나리오 콘텐츠는 없음(아래 참고) |
+| `ch04/d00-shared/local_llm.py` | **(공유)** 실제 로컬 소형 LLM(Ollama, HTTP API) 클라이언트. `wrapper.py`가 재노출해서 d01~d08 이 그 wrap을 통해 쓴다 |
+| `wrapper.py` | `local_llm.py`를 그대로 재노출하는 순수 wrap. 시나리오 콘텐츠는 없음(아래 참고) |
 | `prompts.py` | 시스템 지시문·공격 문구·보안 응답 등 d01 전용 프롬프트 텍스트(`DIRECT_*`/`INDIRECT_*`). 이 폴더 로컬 파일(d00-shared 공유 없음). `ATTACKER_INPUT`은 mock_llm.py 의 카탈로그(`INJECTION_PATTERNS`)가 실제로 잡을 수 있는 override 형 문구를 유지한다(자세한 이유는 그 상수 옆 주석 참고) |
 | `direct_injection.py` | 예제 1: 사용자 입력을 통한 직접 인젝션. `run_real()`이 기본 실행 시 자동으로 실제 Ollama 모델까지 호출한다(`--mock`이면 건너뜀) |
 | `indirect_injection.py` | 예제 2: 검색 문서(RAG)를 통한 간접 인젝션. 마찬가지로 `run_real()` 포함 |
@@ -42,14 +42,14 @@ API 키 없이 재현 가능한 프롬프트 인젝션(Prompt Injection) 실습 
 **`direct_injection.py`** / **`indirect_injection.py`**
 - 로직만 담당: `prompts.py`에서 텍스트를 가져와 `mock_llm.py`(항상)에 넘기고, 결과를 출력·검증(`assert`)한다.
 - `indirect_injection.py`는 추가로 `Document`/`load_documents()`/`keyword_search()`(글자 집합 교집합 기반 검색)와, `mock_llm._find_injection_matches()`를 재사용하는 `_looks_poisoned()`(콘텐츠 보안 스캔)를 갖고 있다.
-- 각 파일의 `run_real()` 함수가 `real_llm.chat_messages()`(=`d00-shared/local_llm.chat_messages()`의 wrap)를 호출해서 실제 모델 재현을 담당한다. `run_real()` 안의 공격 프롬프트 구성은 이 스크립트 전용 콘텐츠이지 `real_llm.py`(순수 wrap)에는 없다. `--mock`이 없는 한 기본으로 실행된다.
+- 각 파일의 `run_real()` 함수가 `wrapper.chat_messages()`(=`d00-shared/local_llm.chat_messages()`의 wrap)를 호출해서 실제 모델 재현을 담당한다. `run_real()` 안의 공격 프롬프트 구성은 이 스크립트 전용 콘텐츠이지 `wrapper.py`(순수 wrap)에는 없다. `--mock`이 없는 한 기본으로 실행된다.
 
 **`documents.json`**
 - 문서 3건: `weather_note`(무관), `refund_policy`(정상 정책), `refund_policy_v2_poisoned`(오염). `keyword_search()`가 질문과 겹치는 글자 수로 상위 문서를 고르므로, "환불" 관련 질문에는 오염 문서가 실제로 검색되도록 문구가 설계돼 있다.
 
 **`Dockerfile`**
 - `ch04/d00-shared/mock_llm.py`, `ch04/d00-shared/local_llm.py`(공유) +
-  `real_llm.py`, `direct_injection.py`, `indirect_injection.py`, `documents.json`,
+  `wrapper.py`, `direct_injection.py`, `indirect_injection.py`, `documents.json`,
   `prompts.py`(d01 전용)을 전부 이미지에 복사해야 한다. 하나라도 빠지면 스크립트
   최상단 import 에서 바로 `ModuleNotFoundError`로 실패한다. `d00-shared/` 가
   다른 폴더이므로 빌드 컨텍스트를 `ch04/` 루트로 지정해야 COPY가 그 경로에
